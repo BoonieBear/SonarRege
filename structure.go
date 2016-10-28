@@ -1,4 +1,4 @@
-// SonarRegener
+// structure
 package SonarRegener
 
 import (
@@ -6,5 +6,5 @@ import (
 )
 
 func main() {
-	fmt.Println("Start regenerator...")
+	fmt.Println("Hello World!")
 }
