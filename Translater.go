@@ -5,7 +5,8 @@ import (
 	"fmt"
 )
 
-func Translate(source []int8) (bool, error) {
-	fmt.Println(source)
-	return true, nil
+//gather several data to generate result file
+func Generate(bathy *Bathy) (*Sonar, error) {
+	sonar := &Sonar{}
+	return nil, nil
 }
