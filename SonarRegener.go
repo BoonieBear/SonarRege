@@ -68,8 +68,8 @@ type OIC_Header struct {
 	Reserved2           [5]uint32
 }
 
-//initial OIC header according by isbathy flag
-func OICInit(header *OIC_Header, isbathy bool) {
+//initial OIC header
+func OICInit(header *OIC_Header) {
 	header.Kind = 0x4F49432F
 	header.Type = 26
 	if isbathy {
@@ -81,6 +81,8 @@ func OICInit(header *OIC_Header, isbathy bool) {
 	header.FishStatus = FOCUSAUTOMANUAL
 	header.NavUsed = 6
 	header.NavType = 1
+	header.UTMZone = 0x3200DA02
+	//field have not initilized use the default value if other not assign value to them
 
 }
 func main() {

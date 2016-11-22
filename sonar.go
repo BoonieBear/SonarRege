@@ -13,6 +13,8 @@ type Sonar struct {
 }
 
 //initialize sonar struct ,call OIC initialize
-func SonarInit() {
+func (sonar *Sonar) Init() {
+	header := &sonar.Header
+	OICInit(header)
 
 }

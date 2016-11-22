@@ -14,6 +14,11 @@ type Bathy struct {
 }
 
 //initialize bathy struct ,call OIC initialize
-func BathyInit() {
+func (bathy *Bathy) Init() {
+	OICInit(header, isbathy)
+}
 
+func (bathy *Bathy) Parse(recvbuf []int8) error {
+	bathy.PortAngle = recvbuf
+	return nil
 }
