@@ -3,6 +3,9 @@ package SonarRegener
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 )
 
 type STATUS uint8
@@ -25,6 +28,13 @@ type Chan struct {
 	Empt      uint8
 	Frequency uint32
 	Samples   uint32
+}
+type Cfg struct {
+	ServerPort    int32
+	SensorPort    int32
+	RelayServPort int32
+	RelaySenrPort int32
+	MaxSize       float64
 }
 type OIC_Header struct {
 	Kind                uint32
@@ -85,6 +95,36 @@ func OICInit(header *OIC_Header) {
 	//field have not initilized use the default value if other not assign value to them
 
 }
+func LoadCfg(string cfgfile) *Cfg {
+	cfg := Cfg{}
+	//file open ok?
+	file, err := os.Open(cfgfile)
+	if err != nil {
+		return ant, err
+	}
+}
+func extractString(line string, keyword string) string {
+	v := strings.TrimSpace(line)
+	sa := strings.Split(v, "=")
+	if sa[0] == keyword {
+		return sa[1]
+	}
+	return ""
+}
+func extractFloat64(line string, keyword string) float64 {
+	v := strings.TrimSpace(line)
+	sa := strings.Split(v, "=")
+	if sa[0] == keyword {
+		f, _ := strconv.ParseFloat(sa[1], 64)
+		return f
+	}
+	return 0
+}
 func main() {
-	fmt.Println("Start generator...\n")
+	fmt.Println("Start SonarGenerator...")
+	fmt.Println("Load Configuration from .ini file...")
+	err := LoadCfg("Cfg.ini")
+	if err != nil {
+
+	}
 }
