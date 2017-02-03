@@ -3,6 +3,7 @@ package SonarRegener
 
 import (
 	"fmt"
+	"ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -100,7 +101,15 @@ func LoadCfg(string cfgfile) *Cfg {
 	//file open ok?
 	file, err := os.Open(cfgfile)
 	if err != nil {
-		return ant, err
+		fmt.Printf("Open config file failed:%s\n", err.Error())
+		return nil
+	}
+	buff, err := ioutil.ReadFile(filename)
+	s, err := utf16toString(buff[:])
+	lines := strings.Split(s, "\n")
+	if lines[0] != "[RecvPort]" {
+		fmt.Println("RecvPort part invalid!")
+		return nil
 	}
 }
 func extractString(line string, keyword string) string {
@@ -120,11 +129,36 @@ func extractFloat64(line string, keyword string) float64 {
 	}
 	return 0
 }
+func utf16toString(b []uint8) (string, error) {
+	if len(b)&1 != 0 {
+		return "", errors.New("len(b) must be even")
+	}
+
+	// Check BOM
+	var bom int
+	if len(b) >= 2 {
+		switch n := int(b[0])<<8 | int(b[1]); n {
+		case 0xfffe:
+			bom = 1
+			fallthrough
+		case 0xfeff:
+			b = b[2:]
+		}
+	}
+
+	w := make([]uint16, len(b)/2)
+	for i := range w {
+		w[i] = uint16(b[2*i+bom&1])<<8 | uint16(b[2*i+(bom+1)&1])
+	}
+	return string(utf16.Decode(w)), nil
+}
 func main() {
 	fmt.Println("Start SonarGenerator...")
-	fmt.Println("Load Configuration from .ini file...")
-	err := LoadCfg("Cfg.ini")
-	if err != nil {
-
+	fmt.Println("Load Configuration from cfg.ini ...")
+	config := LoadCfg("cfg.ini")
+	if config == nil {
+		fmt.Println("No valid configuration, exit...")
+		return
 	}
+
 }
