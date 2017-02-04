@@ -1,5 +1,4 @@
-// define
-package define
+package oic
 
 type STATUS uint8
 
@@ -25,6 +24,7 @@ type Chan struct {
 type Cfg struct {
 	ServerPort    int32
 	SensorPort    int32
+	RelayIP       string
 	RelayServPort int32
 	RelaySenrPort int32
 	MaxSize       float64
@@ -70,9 +70,35 @@ type OIC_Header struct {
 	Channel             [8]Chan
 	Reserved2           [5]uint32
 }
+
+//initial OIC header
+func OICInit(header *OIC_Header, isbathy bool) {
+	header.Kind = 0x4F49432F
+	header.Type = 26
+	if isbathy {
+		header.DataSize = 3752
+	} else {
+		header.DataSize = 35304
+	}
+	header.ClientSize = 248
+	header.FishStatus = FOCUSAUTOMANUAL
+	header.NavUsed = 6
+	header.NavType = 1
+	header.UTMZone = 0x3200DA02
+	//field have not initilized use the default value if other not assign value to them
+
+}
+
 type Sonar struct {
 	Header            OIC_Header
 	PortSidescan      [5825]int16
 	StarboardSidescan [5825]int16
 	SubBottom         [6000]int16
+}
+type Bathy struct {
+	Header         OIC_Header
+	PortAngle      [155]float32
+	PortR          [155]float32
+	StarboardAngle [300]float32
+	StarboardR     [300]float32
 }

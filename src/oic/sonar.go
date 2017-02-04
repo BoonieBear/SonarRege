@@ -1,14 +1,10 @@
 // structure
-package sonar
-
-import (
-	"define"
-)
+package oic
 
 //initialize sonar struct ,call OIC initialize
 func (sonar *Sonar) Init() {
 	header := &sonar.Header
-	OICInit(header)
+	OICInit(header, false)
 	header.ChanNum = 3
 	header.ChanOffset[0] = 0
 	header.ChanOffset[1] = 11650

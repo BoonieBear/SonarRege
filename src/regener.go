@@ -1,36 +1,15 @@
-// main
 package main
 
 import (
-	"bathy"
-	"define"
 	"fmt"
 	"io/ioutil"
+	"oic"
 	"os"
-	"sonar"
 	"strconv"
 	"strings"
 )
 
-//initial OIC header
-func OICInit(header *OIC_Header) {
-	header.Kind = 0x4F49432F
-	header.Type = 26
-	if isbathy {
-		header.DataSize = 3752
-	} else {
-		header.DataSize = 35304
-	}
-	header.ClientSize = 248
-	header.FishStatus = FOCUSAUTOMANUAL
-	header.NavUsed = 6
-	header.NavType = 1
-	header.UTMZone = 0x3200DA02
-	//field have not initilized use the default value if other not assign value to them
-
-}
 func LoadCfg(string cfgfile) *Cfg {
-	cfg := Cfg{}
 	//file open ok?
 	file, err := os.Open(cfgfile)
 	if err != nil {
@@ -44,6 +23,52 @@ func LoadCfg(string cfgfile) *Cfg {
 		fmt.Println("RecvPort part invalid!")
 		return nil
 	}
+	serverport := extractString(lines[1], "ServerPort")
+	if serverport == "" {
+		fmt.Println("ServerPort part invalid!")
+		return nil
+	}
+	sensorport := extractString(lines[2], "SensorPort")
+	if sensorport == "" {
+		fmt.Println("SensorPort part invalid!")
+		return nil
+	}
+	if lines[3] != "[Relay]" {
+		fmt.Println("Relay part invalid!")
+		return nil
+	}
+	relayIP := extractString(lines[4], "RelayIP")
+	if relayIP == "" {
+		fmt.Println("RelayIP part invalid!")
+		return nil
+	}
+	relayservport := extractString(lines[5], "RelayServPort")
+	if relayservport == "" {
+		fmt.Println("RelayServPort part invalid!")
+		return nil
+	}
+	relaysenrport := extractString(lines[6], "RelaySenrPort")
+	if relaysenrport == "" {
+		fmt.Println("RelaySenrPort part invalid!")
+		return nil
+	}
+	if lines[7] != "[Size](Mbyte)" {
+		fmt.Println("[Size](Mbyte) part invalid!")
+		return nil
+	}
+	maxFileSize := extractString(lines[8], "MaxFileSize")
+	if maxFileSize == "" {
+		fmt.Println("MaxFileSize part invalid!")
+		return nil
+	}
+	cfg := Cfg{
+		ServerPort:    int32(serverport),
+		SensorPort:    int32(sensorport),
+		RelayIP:       relayIP,
+		RelayServPort: int32(relayservport),
+		RelaySenrPort: int32(relaysenrport),
+	}
+	return &cfg
 }
 func extractString(line string, keyword string) string {
 	v := strings.TrimSpace(line)
