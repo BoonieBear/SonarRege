@@ -1,7 +1,9 @@
 // structure
-package SonarRegener
+package bathy
 
-//"fmt"
+import (
+	"define"
+)
 
 type Bathy struct {
 	Header         OIC_Header
