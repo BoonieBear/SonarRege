@@ -1,39 +1,42 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"oic"
 	"os"
+	"regener/oic"
 	"strconv"
 	"strings"
+	"unicode/utf16"
 )
 
-func LoadCfg(string cfgfile) *Cfg {
+func LoadCfg(cfgfile string) *oic.Cfg {
 	//file open ok?
-	file, err := os.Open(cfgfile)
+	_, err := os.Open(cfgfile)
 	if err != nil {
 		fmt.Printf("Open config file failed:%s\n", err.Error())
 		return nil
 	}
-	buff, err := ioutil.ReadFile(filename)
-	s, err := utf16toString(buff[:])
+	buff, err := ioutil.ReadFile(cfgfile)
+	//s, err := utf16toString(buff[:])
+	s := string(buff)
 	lines := strings.Split(s, "\n")
-	if lines[0] != "[RecvPort]" {
+	if strings.EqualFold(lines[0], "[RecvPort]") {
 		fmt.Println("RecvPort part invalid!")
 		return nil
 	}
-	serverport := extractString(lines[1], "ServerPort")
-	if serverport == "" {
+	serverport := extractInt32(lines[1], "ServerPort")
+	if serverport == 0 {
 		fmt.Println("ServerPort part invalid!")
 		return nil
 	}
-	sensorport := extractString(lines[2], "SensorPort")
-	if sensorport == "" {
+	sensorport := extractInt32(lines[2], "SensorPort")
+	if sensorport == 0 {
 		fmt.Println("SensorPort part invalid!")
 		return nil
 	}
-	if lines[3] != "[Relay]" {
+	if strings.EqualFold(lines[3], "[Relay]") {
 		fmt.Println("Relay part invalid!")
 		return nil
 	}
@@ -42,31 +45,32 @@ func LoadCfg(string cfgfile) *Cfg {
 		fmt.Println("RelayIP part invalid!")
 		return nil
 	}
-	relayservport := extractString(lines[5], "RelayServPort")
-	if relayservport == "" {
+	relayservport := extractInt32(lines[5], "RelayServPort")
+	if relayservport == 0 {
 		fmt.Println("RelayServPort part invalid!")
 		return nil
 	}
-	relaysenrport := extractString(lines[6], "RelaySenrPort")
-	if relaysenrport == "" {
+	relaysenrport := extractInt32(lines[6], "RelaySenrPort")
+	if relaysenrport == 0 {
 		fmt.Println("RelaySenrPort part invalid!")
 		return nil
 	}
-	if lines[7] != "[Size](Mbyte)" {
+	if strings.EqualFold(lines[7], "[Size](Mbyte)") {
 		fmt.Println("[Size](Mbyte) part invalid!")
 		return nil
 	}
-	maxFileSize := extractString(lines[8], "MaxFileSize")
-	if maxFileSize == "" {
+	maxFileSize := extractFloat64(lines[8], "MaxFileSize")
+	if maxFileSize == 0 {
 		fmt.Println("MaxFileSize part invalid!")
 		return nil
 	}
-	cfg := Cfg{
-		ServerPort:    int32(serverport),
-		SensorPort:    int32(sensorport),
+	cfg := oic.Cfg{
+		ServerPort:    serverport,
+		SensorPort:    sensorport,
 		RelayIP:       relayIP,
-		RelayServPort: int32(relayservport),
-		RelaySenrPort: int32(relaysenrport),
+		RelayServPort: relayservport,
+		RelaySenrPort: relaysenrport,
+		MaxSize:       maxFileSize,
 	}
 	return &cfg
 }
@@ -83,6 +87,15 @@ func extractFloat64(line string, keyword string) float64 {
 	sa := strings.Split(v, "=")
 	if sa[0] == keyword {
 		f, _ := strconv.ParseFloat(sa[1], 64)
+		return f
+	}
+	return 0
+}
+func extractInt32(line string, keyword string) int64 {
+	v := strings.TrimSpace(line)
+	sa := strings.Split(v, "=")
+	if sa[0] == keyword {
+		f, _ := strconv.ParseInt(sa[1], 0, 32)
 		return f
 	}
 	return 0

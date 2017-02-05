@@ -22,11 +22,11 @@ type Chan struct {
 	Samples   uint32
 }
 type Cfg struct {
-	ServerPort    int32
-	SensorPort    int32
+	ServerPort    int64
+	SensorPort    int64
 	RelayIP       string
-	RelayServPort int32
-	RelaySenrPort int32
+	RelayServPort int64
+	RelaySenrPort int64
 	MaxSize       float64
 }
 type OIC_Header struct {
