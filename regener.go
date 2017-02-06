@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regener/oic"
 	"strconv"
@@ -13,53 +13,100 @@ import (
 
 func LoadCfg(cfgfile string) *oic.Cfg {
 	//file open ok?
-	_, err := os.Open(cfgfile)
+	file, err := os.Open(cfgfile)
 	if err != nil {
 		fmt.Printf("Open config file failed:%s\n", err.Error())
 		return nil
 	}
-	buff, err := ioutil.ReadFile(cfgfile)
-	//s, err := utf16toString(buff[:])
-	s := string(buff)
-	lines := strings.Split(s, "\n")
-	if strings.EqualFold(lines[0], "[RecvPort]") {
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	if reader == nil {
+		fmt.Println("Read config file failed")
+		return nil
+	}
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("read RecvPort title failed:%s\n", err.Error())
+		return nil
+	}
+	if strings.TrimSpace(line) != "[RecvPort]" {
 		fmt.Println("RecvPort part invalid!")
 		return nil
 	}
-	serverport := extractInt32(lines[1], "ServerPort")
+	line, err = reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("read ServerPort failed:%s\n", err.Error())
+		return nil
+	}
+	serverport := extractInt32(line, "ServerPort")
 	if serverport == 0 {
 		fmt.Println("ServerPort part invalid!")
 		return nil
 	}
-	sensorport := extractInt32(lines[2], "SensorPort")
+	line, err = reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("read SensorPort failed:%s\n", err.Error())
+		return nil
+	}
+	sensorport := extractInt32(line, "SensorPort")
 	if sensorport == 0 {
 		fmt.Println("SensorPort part invalid!")
 		return nil
 	}
-	if strings.EqualFold(lines[3], "[Relay]") {
+	line, err = reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("read Relay title failed:%s\n", err.Error())
+		return nil
+	}
+	if strings.TrimSpace(line) != "[Relay]" {
 		fmt.Println("Relay part invalid!")
 		return nil
 	}
-	relayIP := extractString(lines[4], "RelayIP")
+	line, err = reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("read RelayIP failed:%s\n", err.Error())
+		return nil
+	}
+	relayIP := extractString(line, "RelayIP")
 	if relayIP == "" {
 		fmt.Println("RelayIP part invalid!")
 		return nil
 	}
-	relayservport := extractInt32(lines[5], "RelayServPort")
+	line, err = reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("read RelayServPort failed:%s\n", err.Error())
+		return nil
+	}
+	relayservport := extractInt32(line, "RelayServPort")
 	if relayservport == 0 {
 		fmt.Println("RelayServPort part invalid!")
 		return nil
 	}
-	relaysenrport := extractInt32(lines[6], "RelaySenrPort")
+	line, err = reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("read RelaySenrPort failed:%s\n", err.Error())
+		return nil
+	}
+	relaysenrport := extractInt32(line, "RelaySenrPort")
 	if relaysenrport == 0 {
 		fmt.Println("RelaySenrPort part invalid!")
 		return nil
 	}
-	if strings.EqualFold(lines[7], "[Size](Mbyte)") {
+	line, err = reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("read Size title failed:%s\n", err.Error())
+		return nil
+	}
+	if strings.TrimSpace(line) != "[Size](Mbyte)" {
 		fmt.Println("[Size](Mbyte) part invalid!")
 		return nil
 	}
-	maxFileSize := extractFloat64(lines[8], "MaxFileSize")
+	line, err = reader.ReadString('\n')
+	if err != nil && err.Error() != "EOF" {
+		fmt.Printf("read MaxFileSize failed:%s\n", err.Error())
+		return nil
+	}
+	maxFileSize := extractFloat64(line, "MaxFileSize")
 	if maxFileSize == 0 {
 		fmt.Println("MaxFileSize part invalid!")
 		return nil
