@@ -60,6 +60,6 @@ func TestWatch(t *testing.T) {
 		t.Fatal("Watch Failed!")
 	}
 }
-func TestFetchData(t *testing.T）｛
+func TestFetchData(t *testing.T) {
 
-｝
+}
