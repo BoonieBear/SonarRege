@@ -12,7 +12,7 @@ func NewQueue(size int) *Queue {
 	}
 }
 
-// Push adds a node to the queue.
+// Push a node to the queue.
 func (q *Queue) Push(n *node) {
 	if q.head == q.tail && q.count > 0 {
 		nodes := make([]*node, len(q.nodes)+q.size)
