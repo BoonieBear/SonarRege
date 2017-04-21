@@ -2,6 +2,11 @@ package oic
 
 type STATUS uint8
 
+type IOIC interface {
+	Init()
+	Parse(recvbuf []int8) error
+}
+
 const (
 	FOCUSAUTOMANUAL          STATUS = 0
 	FOCUSMANUALDISABLEENABLE STATUS = 1
@@ -13,7 +18,7 @@ const (
 	QUAlITYBIT               STATUS = 7
 )
 
-type Chan struct {
+type Channel struct {
 	Type      uint8
 	Side      uint8
 	Size      uint8
@@ -67,7 +72,7 @@ type OIC_Header struct {
 	Reserved1           uint32
 	ChanNum             uint32
 	ChanOffset          [8]uint32
-	Channel             [8]Chan
+	Channel             [8]Channel
 	Reserved2           [5]uint32
 }
 

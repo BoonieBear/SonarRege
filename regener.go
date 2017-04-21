@@ -3,6 +3,11 @@ package main
 import (
 	"fmt"
 	//"regener/oic"
+	"regener/sensor"
+)
+
+var (
+	GPS = "gps"
 )
 
 func main() {
@@ -13,5 +18,7 @@ func main() {
 		fmt.Println("No valid configuration, exit...")
 		return
 	}
-
+	SQMap := map[string]*Queue{
+		GPS: NewQueue(100),
+	}
 }

@@ -121,6 +121,11 @@ func LoadCfg(cfgfile string) *oic.Cfg {
 	}
 	return &cfg
 }
+func (cfg oic.Cfg) Dump() {
+	if cfg != nil {
+		fmt.Println("====List all items in Config file=====")
+	}
+}
 func extractString(line string, keyword string) string {
 	v := strings.TrimSpace(line)
 	sa := strings.Split(v, "=")

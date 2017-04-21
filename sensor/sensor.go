@@ -12,15 +12,10 @@ func NewQueue(size int) *Queue {
 	}
 }
 
-// Push a node to the queue.
+// Push a node to the queue. If count ==size, then pop the oldest one and push the new node
 func (q *Queue) Push(n *node) {
 	if q.head == q.tail && q.count > 0 {
-		nodes := make([]*node, len(q.nodes)+q.size)
-		copy(nodes, q.nodes[q.head:])
-		copy(nodes[len(q.nodes)-q.head:], q.nodes[:q.head])
-		q.head = 0
-		q.tail = len(q.nodes)
-		q.nodes = nodes
+		q.Pop()
 	}
 	q.nodes[q.tail] = n
 	q.tail = (q.tail + 1) % len(q.nodes)

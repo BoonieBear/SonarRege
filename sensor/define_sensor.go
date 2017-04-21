@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+type ISensor interface {
+	Init()
+	Parse(recvbuf []int8) error
+}
+
 type sensor1 struct {
 	value1 int
 	value2 float64
