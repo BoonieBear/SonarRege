@@ -76,28 +76,35 @@ func (q *Queue) FetchData(mergertime time.Time) interface{} {
 	dr2 := snd_node.Time.Sub(mergertime)
 	rate := float64(dr1.Nanoseconds()) / float64(dr1.Nanoseconds()+dr2.Nanoseconds())
 	switch data1 := fst_node.Data.(type) {
-	case *sensor1:
+	case *Gps:
 		switch data2 := snd_node.Data.(type) {
-		case *sensor1:
-
-			return &sensor1{
-				value1: int(float64(data1.value1) + float64(data2.value1-data1.value1)*rate),
-				value2: (float64(data1.value2) + float64(data2.value2-data1.value2)*rate),
-			}
+		case *Gps:
+			return MergeGPS(fst_node.Data, snd_node.Data, rate)
 		}
 
-	case *sensor2:
+	case *Pose:
 		switch data2 := snd_node.Data.(type) {
-		case *sensor2:
+		case *Pose:
 
-			return &sensor2{
-				value1: int(float64(data1.value1) + float64(data2.value1-data1.value1)*rate),
-				value2: (float64(data1.value2) + float64(data2.value2-data1.value2)*rate),
-			}
+			return MergePose(fst_node.Data, snd_node.Data, rate)
 		}
 
 	}
-	//type snot match
+	//mismatch
 	return nil
 
+}
+
+func MergeGPS(gps_fst *Gps, gps_snd *Gps, rate float64) *Gps {
+	return &Gps{
+		value1: int(float64(gps_fst.value1) + float64(gps_snd.value1-gps_fst.value1)*rate),
+		value2: (float64(gps_fst.value2) + float64(gps_snd.value2-gps_fst.value2)*rate),
+	}
+}
+
+func MergePose(pose_fst *Pose, pose_snd *Pose, rate float64) *Pose {
+	return &Gps{
+		value1: int(float64(pose_fst.value1) + float64(pose_snd.value1-pose_fst.value1)*rate),
+		value2: (float64(pose_fst.value2) + float64(pose_snd.value2-pose_fst.value2)*rate),
+	}
 }

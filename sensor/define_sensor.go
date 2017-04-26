@@ -9,12 +9,12 @@ type ISensor interface {
 	Parse(recvbuf []int8) error
 }
 
-type sensor1 struct {
+type Gps struct {
 	value1 int
 	value2 float64
 }
 
-type sensor2 struct {
+type Pose struct {
 	value1 int
 	value2 float64
 }

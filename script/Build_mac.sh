@@ -1,6 +1,7 @@
 #!/bin/bash
 echo 'Build regener for mac....'
-increasebuild.sh
+chmod 755 *
+./increasebuild.sh
 FILENAME="buildnumber.h"
 while read LINE
 do

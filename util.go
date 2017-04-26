@@ -124,6 +124,13 @@ func LoadCfg(cfgfile string) *oic.Cfg {
 func (cfg oic.Cfg) Dump() {
 	if cfg != nil {
 		fmt.Println("====List all items in Config file=====")
+		fmt.Printf("== Server Port: %d \n", cfg.ServerPort)
+		fmt.Printf("== Sensor Port: %d \n", cfg.SensorPort)
+		fmt.Printf("== Relay IP: %d \n", cfg.RelayIP)
+		fmt.Printf("== Relay Server Port: %d \n", cfg.RelayServPort)
+		fmt.Printf("== Relay Sensor Port: %d \n", cfg.RelaySenrPort)
+		fmt.Printf("== Max File Size: %d \n", cfg.MaxSize)
+
 	}
 }
 func extractString(line string, keyword string) string {

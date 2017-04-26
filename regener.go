@@ -7,18 +7,24 @@ import (
 )
 
 var (
-	GPS = "gps"
+	sGPS  = "gps"
+	sPOSE = "pose"
 )
 
 func main() {
 	fmt.Println("Start SonarGenerator...")
-	fmt.Println("Load Configuration from cfg.ini ...")
+	fmt.Println("Load Configuration from cfg.ini ......")
 	config := LoadCfg("cfg.ini")
 	if config == nil {
-		fmt.Println("No valid configuration, exit...")
+		fmt.Println("No valid configuration, exit......")
 		return
 	}
+	//dump all items in config
+	config.Dump()
+
+	fmt.Println("Create queue map for sensor data......")
 	SQMap := map[string]*Queue{
-		GPS: NewQueue(100),
+		sGPS:  NewQueue(100),
+		sPOSE: NeWQueue(100),
 	}
 }
