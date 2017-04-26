@@ -5,13 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"regener/oic"
 	"strconv"
 	"strings"
 	"unicode/utf16"
 )
 
-func LoadCfg(cfgfile string) *oic.Cfg {
+type Cfg struct {
+	ServerPort    int64
+	SensorPort    int64
+	RelayIP       string
+	RelayServPort int64
+	RelaySenrPort int64
+	MaxSize       float64
+}
+
+func LoadCfg(cfgfile string) *Cfg {
 	//file open ok?
 	file, err := os.Open(cfgfile)
 	if err != nil {
@@ -111,7 +119,7 @@ func LoadCfg(cfgfile string) *oic.Cfg {
 		fmt.Println("MaxFileSize part invalid!")
 		return nil
 	}
-	cfg := oic.Cfg{
+	cfg := Cfg{
 		ServerPort:    serverport,
 		SensorPort:    sensorport,
 		RelayIP:       relayIP,
@@ -121,7 +129,7 @@ func LoadCfg(cfgfile string) *oic.Cfg {
 	}
 	return &cfg
 }
-func (cfg oic.Cfg) Dump() {
+func (cfg *Cfg) Dump() {
 	if cfg != nil {
 		fmt.Println("====List all items in Config file=====")
 		fmt.Printf("== Server Port: %d \n", cfg.ServerPort)

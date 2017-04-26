@@ -19,10 +19,26 @@ type Pose struct {
 	value2 float64
 }
 
+func (p *Pose) Init() {
+
+}
+
+func (g *Gps) Init() {
+
+}
+
+func (p *Pose) Parse(recvbuf []int8) error {
+	return nil
+}
+
+func (g *Gps) Parse(recvbuf []int8) error {
+	return nil
+}
+
 //
 type node struct {
 	Time time.Time
-	Data interface{}
+	Data ISensor
 }
 
 // Queue is a basic FIFO queue based on a circular list that resizes as needed.

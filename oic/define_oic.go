@@ -26,14 +26,7 @@ type Channel struct {
 	Frequency uint32
 	Samples   uint32
 }
-type Cfg struct {
-	ServerPort    int64
-	SensorPort    int64
-	RelayIP       string
-	RelayServPort int64
-	RelaySenrPort int64
-	MaxSize       float64
-}
+
 type OIC_Header struct {
 	Kind                uint32
 	Type                uint32

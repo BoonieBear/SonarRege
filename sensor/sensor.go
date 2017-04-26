@@ -75,20 +75,16 @@ func (q *Queue) FetchData(mergertime time.Time) interface{} {
 	dr1 := mergertime.Sub(fst_node.Time)
 	dr2 := snd_node.Time.Sub(mergertime)
 	rate := float64(dr1.Nanoseconds()) / float64(dr1.Nanoseconds()+dr2.Nanoseconds())
-	switch data1 := fst_node.Data.(type) {
-	case *Gps:
-		switch data2 := snd_node.Data.(type) {
-		case *Gps:
-			return MergeGPS(fst_node.Data, snd_node.Data, rate)
+
+	if value1, ok := fst_node.Data.(*Gps); ok {
+		if value2, ok := snd_node.Data.(*Gps); ok {
+			return MergeGPS(value1, value2, rate)
 		}
-
-	case *Pose:
-		switch data2 := snd_node.Data.(type) {
-		case *Pose:
-
-			return MergePose(fst_node.Data, snd_node.Data, rate)
+	}
+	if value1, ok := fst_node.Data.(*Pose); ok {
+		if value2, ok := snd_node.Data.(*Pose); ok {
+			return MergePose(value1, value2, rate)
 		}
-
 	}
 	//mismatch
 	return nil
@@ -103,7 +99,7 @@ func MergeGPS(gps_fst *Gps, gps_snd *Gps, rate float64) *Gps {
 }
 
 func MergePose(pose_fst *Pose, pose_snd *Pose, rate float64) *Pose {
-	return &Gps{
+	return &Pose{
 		value1: int(float64(pose_fst.value1) + float64(pose_snd.value1-pose_fst.value1)*rate),
 		value2: (float64(pose_fst.value2) + float64(pose_snd.value2-pose_fst.value2)*rate),
 	}
