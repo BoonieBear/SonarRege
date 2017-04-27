@@ -4,6 +4,10 @@ import (
 	"time"
 )
 
+// func ParseSensor(buf []int8, queuelock *sync.Mutex) ISensor {
+// 	if ut
+// }
+
 // NewQueue returns a new queue with the given initial size.
 func NewQueue(size int) *Queue {
 	return &Queue{
@@ -43,7 +47,7 @@ func (q *Queue) Watch() *node {
 }
 
 //return mergerd data of given time
-func (q *Queue) FetchData(mergertime time.Time) interface{} {
+func (q *Queue) FetchData(mergertime time.Time) ISensor {
 
 	var fst_node, snd_node *node
 	for {
