@@ -4,9 +4,17 @@ import (
 	"time"
 )
 
-// func ParseSensor(buf []int8, queuelock *sync.Mutex) ISensor {
-// 	if ut
-// }
+func SensorDispatcher(recvbuf []int8, queuelock *sync.Mutex) error {
+	return nil
+}
+
+func (p *Pose) Parse(recvbuf []int8) error {
+	return nil
+}
+
+func (g *Gps) Parse(recvbuf []int8) error {
+	return nil
+}
 
 // NewQueue returns a new queue with the given initial size.
 func NewQueue(size int) *Queue {

@@ -4,35 +4,35 @@ import (
 	"time"
 )
 
+var (
+	sAP      = "ap"
+	sTCM5    = "tcm5"
+	sCTD     = "ctd"
+	sPresure = "presure"
+)
+
 type ISensor interface {
-	Init()
 	Parse(recvbuf []int8) error
 }
 
-type Gps struct {
+type AP struct {
 	value1 int
 	value2 float64
 }
 
-type Pose struct {
+type TCM5 struct {
 	value1 int
 	value2 float64
 }
 
-func (p *Pose) Init() {
-
+type Ctd struct {
+	value1 int
+	value2 float64
 }
 
-func (g *Gps) Init() {
-
-}
-
-func (p *Pose) Parse(recvbuf []int8) error {
-	return nil
-}
-
-func (g *Gps) Parse(recvbuf []int8) error {
-	return nil
+type Presure struct {
+	value1 int
+	value2 float64
 }
 
 //

@@ -10,13 +10,6 @@ import (
 	"time"
 )
 
-var (
-	sAP      = "ap"
-	sPOSE    = "pose"
-	sCTD     = "ctd"
-	sPresure = "presure"
-)
-
 var RelayEnable bool = false
 var RelayChan chan []byte = make(chan []byte, 100)
 var logger = new(util.Logger)
@@ -36,7 +29,7 @@ func main() {
 	//logger.Println("Create queue map for sensor data......")
 	SQMap = map[string]*sensor.Queue{
 		sAP:      sensor.NewQueue(100),
-		sPOSE:    sensor.NewQueue(100),
+		sTCM5:    sensor.NewQueue(100),
 		sCTD:     sensor.NewQueue(100),
 		sPresure: sensor.NewQueue(100),
 	}
@@ -102,7 +95,7 @@ func SetupServer(cfg *util.Cfg) {
 
 func handleConnection(conn net.Conn) {
 
-	buffer := make([]byte, 2048)
+	buffer := make([]byte, 8)
 
 	for {
 
@@ -114,6 +107,8 @@ func handleConnection(conn net.Conn) {
 		}
 		if n > 8 {
 			logger.Println(fmt.Sprintf("Connection - %s"+conn.RemoteAddr().String(), string(buffer[:])))
+		} else {
+
 		}
 
 	}
