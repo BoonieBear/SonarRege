@@ -13,7 +13,7 @@ import (
 var RelayEnable bool = false
 var RelayChan chan []byte = make(chan []byte, 100)
 var logger = new(util.Logger)
-var SQMap map[string]*sensor.Queue
+var SQMap map[uint16]*sensor.Queue
 
 func main() {
 	logger.New("regener.log")
@@ -27,11 +27,11 @@ func main() {
 	config.Dump()
 
 	//logger.Println("Create queue map for sensor data......")
-	SQMap = map[string]*sensor.Queue{
-		sAP:      sensor.NewQueue(100),
-		sTCM5:    sensor.NewQueue(100),
-		sCTD:     sensor.NewQueue(100),
-		sPresure: sensor.NewQueue(100),
+	SQMap = map[uint16]*sensor.Queue{
+		sensor.APHeader:      sensor.NewQueue(100),
+		sensor.TCM5Header:    sensor.NewQueue(100),
+		sensor.CTD6000Header: sensor.NewQueue(100),
+		sensor.PresureHeader: sensor.NewQueue(100),
 	}
 	logger.Println("Start RelayThread.....")
 	go RelayThread(config)
@@ -95,7 +95,7 @@ func SetupServer(cfg *util.Cfg) {
 
 func handleConnection(conn net.Conn) {
 
-	buffer := make([]byte, 8)
+	buffer := make([]byte, 65536)
 
 	for {
 

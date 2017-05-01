@@ -4,15 +4,19 @@ import (
 	"time"
 )
 
-func SensorDispatcher(recvbuf []int8, queuelock *sync.Mutex) error {
+func (ap *AP) Parse(recvbuf []int8) error {
 	return nil
 }
 
-func (p *Pose) Parse(recvbuf []int8) error {
+func (p *Presure) Parse(recvbuf []int8) error {
 	return nil
 }
 
-func (g *Gps) Parse(recvbuf []int8) error {
+func (p *TCM5) Parse(recvbuf []int8) error {
+	return nil
+}
+
+func (p *Ctd) Parse(recvbuf []int8) error {
 	return nil
 }
 
@@ -88,14 +92,24 @@ func (q *Queue) FetchData(mergertime time.Time) ISensor {
 	dr2 := snd_node.Time.Sub(mergertime)
 	rate := float64(dr1.Nanoseconds()) / float64(dr1.Nanoseconds()+dr2.Nanoseconds())
 
-	if value1, ok := fst_node.Data.(*Gps); ok {
-		if value2, ok := snd_node.Data.(*Gps); ok {
-			return MergeGPS(value1, value2, rate)
+	if value1, ok := fst_node.Data.(*AP); ok {
+		if value2, ok := snd_node.Data.(*AP); ok {
+			return MergeAP(value1, value2, rate)
 		}
 	}
-	if value1, ok := fst_node.Data.(*Pose); ok {
-		if value2, ok := snd_node.Data.(*Pose); ok {
-			return MergePose(value1, value2, rate)
+	if value1, ok := fst_node.Data.(*TCM5); ok {
+		if value2, ok := snd_node.Data.(*TCM5); ok {
+			return MergeTCM5(value1, value2, rate)
+		}
+	}
+	if value1, ok := fst_node.Data.(*Ctd); ok {
+		if value2, ok := snd_node.Data.(*Ctd); ok {
+			return MergeCtd(value1, value2, rate)
+		}
+	}
+	if value1, ok := fst_node.Data.(*Presure); ok {
+		if value2, ok := snd_node.Data.(*Presure); ok {
+			return MergePresure(value1, value2, rate)
 		}
 	}
 	//mismatch
@@ -103,16 +117,18 @@ func (q *Queue) FetchData(mergertime time.Time) ISensor {
 
 }
 
-func MergeGPS(gps_fst *Gps, gps_snd *Gps, rate float64) *Gps {
-	return &Gps{
-		value1: int(float64(gps_fst.value1) + float64(gps_snd.value1-gps_fst.value1)*rate),
-		value2: (float64(gps_fst.value2) + float64(gps_snd.value2-gps_fst.value2)*rate),
-	}
+func MergeAP(ap_fst *AP, ap_snd *AP, rate float64) *AP {
+	return &AP{}
 }
 
-func MergePose(pose_fst *Pose, pose_snd *Pose, rate float64) *Pose {
-	return &Pose{
-		value1: int(float64(pose_fst.value1) + float64(pose_snd.value1-pose_fst.value1)*rate),
-		value2: (float64(pose_fst.value2) + float64(pose_snd.value2-pose_fst.value2)*rate),
-	}
+func MergeTCM5(tcm5_fst *TCM5, tcm5_snd *TCM5, rate float64) *TCM5 {
+	return &TCM5{}
+}
+
+func MergeCtd(ctd_fst *Ctd, ctd_snd *Ctd, rate float64) *Ctd {
+	return &Ctd{}
+}
+
+func MergePresure(pre_fst *Presure, pre_snd *Presure, rate float64) *Presure {
+	return &Presure{}
 }

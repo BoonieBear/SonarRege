@@ -4,12 +4,33 @@ import (
 	"time"
 )
 
-var (
-	sAP      = "ap"
-	sTCM5    = "tcm5"
-	sCTD     = "ctd"
-	sPresure = "presure"
+const (
+	SensorHeadId  uint16 = 0x8000
+	SensorVersion uint16 = 0x0200
+	APHeader      uint16 = 0x5053
+	CTD6000Header uint16 = 0x4354
+	CTD4500Header uint16 = 0x5444
+	OASHeader     uint16 = 0x4250
+	TCM5Header    uint16 = 0x4F43
+	DVLHeader     uint16 = 0x4456
+	PresureHeader uint16 = 0x5052
+	PHINSHeader   uint16 = 0x5048
+	HeightHeader  uint16 = 0x414C
+	GPSHeader     uint16 = 0x4750
 )
+
+var IDs = [...]uint16{
+	APHeader,
+	CTD6000Header,
+	CTD4500Header,
+	OASHeader,
+	TCM5Header,
+	DVLHeader,
+	PresureHeader,
+	PHINSHeader,
+	HeightHeader,
+	GPSHeader,
+}
 
 type ISensor interface {
 	Parse(recvbuf []int8) error
