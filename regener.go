@@ -7,6 +7,7 @@ import (
 	"regener/sensor"
 	"regener/util"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -14,6 +15,7 @@ var RelayEnable bool = false
 var RelayChan chan []byte = make(chan []byte, 100)
 var logger = new(util.Logger)
 var SQMap map[uint16]*sensor.Queue
+var maplock = new(sync.Mutex)
 
 func main() {
 	logger.New("regener.log")
@@ -28,15 +30,22 @@ func main() {
 
 	//logger.Println("Create queue map for sensor data......")
 	SQMap = map[uint16]*sensor.Queue{
+		sensor.BsssId:        sensor.NewQueue(100),
 		sensor.APHeader:      sensor.NewQueue(100),
 		sensor.TCM5Header:    sensor.NewQueue(100),
 		sensor.CTD6000Header: sensor.NewQueue(100),
 		sensor.PresureHeader: sensor.NewQueue(100),
 	}
-	logger.Println("Start RelayThread.....")
+	logger.Println("Start Regenarator Thread.....")
+	go RegenThread(config)
+	logger.Println("Start Relay Thread.....")
 	go RelayThread(config)
-	logger.Println("Start ServerThread......")
+	logger.Println("Start Server Thread......")
 	SetupServer(config)
+}
+
+func RegenThread(cfg *util.Cfg) {
+
 }
 
 //relay thread: wait for incoming data and relay to dest addr
@@ -94,20 +103,26 @@ func SetupServer(cfg *util.Cfg) {
 }
 
 func handleConnection(conn net.Conn) {
-
-	buffer := make([]byte, 65536)
-
+	//incoming buffer
+	var buffer []byte
+	buf := make([]byte, 4096)
 	for {
 
-		n, err := conn.Read(buffer)
+		n, err := conn.Read(buf)
 
 		if err != nil {
 			logger.Println(fmt.Sprintf("Connection - "+conn.RemoteAddr().String(), " connection error: ", err))
 			return
 		}
-		if n > 8 {
-			logger.Println(fmt.Sprintf("Connection - %s"+conn.RemoteAddr().String(), string(buffer[:])))
-		} else {
+		if n > 0 {
+			buffer = append(buffer, buf[:n-1]...)
+			err = util.Dispatcher(buffer, maplock)
+			if err != nil {
+				logger.Println(fmt.Sprintf("Dispatcher error- ", err))
+			}
+			if RelayEnable {
+				RelayChan <- buf[:n-1]
+			}
 
 		}
 

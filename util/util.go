@@ -260,6 +260,6 @@ func BytesToInt(bits int32, buf []byte) int64 {
 }
 
 //dispatch the sensor and bsss data
-func Dispatcher(recvbuf []int8, queuelock *sync.Mutex) error {
+func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 	return nil
 }

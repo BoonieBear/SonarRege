@@ -1,4 +1,4 @@
-package bsss
+package sensor
 
 type bsss struct {
 }
