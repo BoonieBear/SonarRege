@@ -13,7 +13,7 @@ const (
 	CTD6000Header uint16 = 0x4354
 	CTD4500Header uint16 = 0x5444
 	OASHeader     uint16 = 0x4250
-	TCM5Header    uint16 = 0x4F43
+	CompassHeader uint16 = 0x4F43
 	DVLHeader     uint16 = 0x4456
 	PresureHeader uint16 = 0x5052
 	PHINSHeader   uint16 = 0x5048
@@ -26,7 +26,7 @@ var IDs = [...]uint16{
 	CTD6000Header,
 	CTD4500Header,
 	OASHeader,
-	TCM5Header,
+	CompassHeader,
 	DVLHeader,
 	PresureHeader,
 	PHINSHeader,
@@ -35,27 +35,45 @@ var IDs = [...]uint16{
 }
 
 type ISensor interface {
-	Parse(recvbuf []int8) error
+	Parse(recvbuf []byte) error
 }
 
 type AP struct {
-	value1 int
-	value2 float64
+	Time time.Time
+	Lat  float64
+	Lng  float64
 }
 
-type TCM5 struct {
-	value1 int
-	value2 float64
+type Compass struct {
+	Time  time.Time
+	Head  float64
+	Pitch float64
+	Roll  float64
 }
 
-type Ctd struct {
-	value1 int
-	value2 float64
+type Ctd6000 struct {
+	Time time.Time
+	cond float64
+	//Salt  float64
+	//Depth float64
+	Pres float64
+	Temp float64
+	Turb float64
+	Vel  float64
+}
+
+type Ctd4500 struct {
+	Time time.Time
+	Temp float64
+	cond float64
+	Pres float64
+	Salt float64
+	Vel  float64
 }
 
 type Presure struct {
-	value1 int
-	value2 float64
+	Time time.Time
+	P    float64
 }
 
 //
