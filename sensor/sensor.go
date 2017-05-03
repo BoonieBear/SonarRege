@@ -2,6 +2,7 @@ package sensor
 
 import (
 	"errors"
+	//"log"
 	"math"
 	"regener/util"
 	"strconv"
@@ -10,22 +11,24 @@ import (
 )
 
 func extractTime(timestr string) time.Time {
-	year, _ := strconv.Atoi(timestr[0:3])
-	month, _ := strconv.Atoi(timestr[4:5])
-	day, _ := strconv.Atoi(timestr[6:7])
-	hour, _ := strconv.Atoi(timestr[8:9])
-	mins, _ := strconv.Atoi(timestr[10:11])
-	sec, _ := strconv.Atoi(timestr[12:13])
-	msec, _ := strconv.Atoi(timestr[14:19])
-	return time.Time(year, month, day, hour, mins, sec, msec, time.UTC)
+	year, _ := strconv.Atoi(timestr[0:4])
+	month, _ := strconv.Atoi(timestr[4:6])
+	day, _ := strconv.Atoi(timestr[6:8])
+	hour, _ := strconv.Atoi(timestr[8:10])
+	mins, _ := strconv.Atoi(timestr[10:12])
+	sec, _ := strconv.Atoi(timestr[12:14])
+	msec, _ := strconv.Atoi(timestr[14:20])
+
+	return time.Date(year, time.Month(month), day, hour, mins, sec, msec, time.UTC)
 }
 func (ap *AP) Parse(recvbuf []byte) error {
 	if util.BytesToUInt(16, recvbuf) != uint64(APHeader) {
 		return errors.New("AP Header missed!")
 	}
-	len := util.BytesToUInt(16, recvbuf[2])
-	payload := string(recvbuf[4 : 4+len-1])
-	timestr := payload[0:19]
+	len := util.BytesToUInt(16, recvbuf[2:])
+
+	payload := string(recvbuf[4 : 4+len])
+	timestr := payload[0:20]
 
 	ap.Time = extractTime(timestr)
 
@@ -50,18 +53,121 @@ func (ap *AP) Parse(recvbuf []byte) error {
 }
 
 func (p *Presure) Parse(recvbuf []byte) error {
+	if util.BytesToUInt(16, recvbuf) != uint64(PresureHeader) {
+		return errors.New("Presure Header missed!")
+	}
+	len := util.BytesToUInt(16, recvbuf[2:])
+
+	payload := string(recvbuf[4 : 4+len])
+	timestr := payload[0:20]
+
+	p.Time = extractTime(timestr)
+
+	data := strings.Split(payload[20:], ",")
+	if data[0] != "$PIPS" {
+		return errors.New("$PIPS missed!")
+	}
+
+	p.P, _ = strconv.ParseFloat(data[1], 64)
+
 	return nil
 }
 
-func (p *Compass) Parse(recvbuf []byte) error {
+func (comp *Compass) Parse(recvbuf []byte) error {
+	if util.BytesToUInt(16, recvbuf) != uint64(CompassHeader) {
+		return errors.New("Compass Header missed!")
+	}
+	length := util.BytesToUInt(16, recvbuf[2:])
+
+	payload := string(recvbuf[4 : 4+length])
+	timestr := payload[0:20]
+
+	comp.Time = extractTime(timestr)
+
+	data := strings.Split(payload[20:], ",")
+	if data[0] != "$HEHDT" {
+		return errors.New("$HEHDT missed!")
+	}
+
+	comp.Head, _ = strconv.ParseFloat(data[1], 64)
+	if len(data) > 4 {
+		if strings.Contains(data[2], "$PIXSE") == false {
+			return errors.New("$PIXSE missed!")
+		}
+
+		comp.Roll, _ = strconv.ParseFloat(data[4], 64)
+		comp.Pitch, _ = strconv.ParseFloat(strings.Split(data[5], "*")[0], 64)
+	}
 	return nil
 }
 
-func (p *Ctd4500) Parse(recvbuf []byte) error {
+func (ctd *Ctd4500) Parse(recvbuf []byte) error {
+	if util.BytesToUInt(16, recvbuf) != uint64(CTD4500Header) {
+		return errors.New("Ctd4500 Header missed!")
+	}
+	len := util.BytesToUInt(16, recvbuf[2:])
+
+	payload := string(recvbuf[4 : 4+len])
+	timestr := payload[0:20]
+
+	ctd.Time = extractTime(timestr)
+
+	data := strings.Split(payload[20:], ",")
+
+	ctd.Temp, _ = strconv.ParseFloat(strings.TrimSpace(data[0]), 64)
+	ctd.cond, _ = strconv.ParseFloat(strings.TrimSpace(data[1]), 64)
+	ctd.Pres, _ = strconv.ParseFloat(strings.TrimSpace(data[2]), 64)
+	ctd.Salt, _ = strconv.ParseFloat(strings.TrimSpace(data[3]), 64)
+	ctd.Vel, _ = strconv.ParseFloat(strings.TrimSpace(data[4]), 64)
+
 	return nil
 }
-func (p *Ctd6000) Parse(recvbuf []byte) error {
+func (ctd *Ctd6000) Parse(recvbuf []byte) error {
+	if util.BytesToUInt(16, recvbuf) != uint64(CTD6000Header) {
+		return errors.New("Ctd6000 Header missed!")
+	}
+	len := util.BytesToUInt(16, recvbuf[2:])
+
+	payload := string(recvbuf[4 : 4+len])
+	timestr := payload[0:20]
+
+	ctd.Time = extractTime(timestr)
+
+	data := strings.Split(payload[20:], " ")
+	if data[0] != "TIM" {
+		return errors.New("TIM missed!")
+	}
+	if strings.HasPrefix(data[2], "s") {
+		ctd.cond, _ = strconv.ParseFloat(strings.TrimPrefix(data[2], "s"), 64)
+		ctd.cond = -ctd.cond
+	} else {
+		ctd.cond, _ = strconv.ParseFloat(data[2], 64)
+	}
+	if strings.HasPrefix(data[3], "s") {
+		ctd.Temp, _ = strconv.ParseFloat(strings.TrimPrefix(data[3], "s"), 64)
+		ctd.Temp = -ctd.Temp
+	} else {
+		ctd.Temp, _ = strconv.ParseFloat(data[3], 64)
+	}
+	if strings.HasPrefix(data[4], "s") {
+		ctd.Pres, _ = strconv.ParseFloat(strings.TrimPrefix(data[4], "s"), 64)
+		ctd.Pres = -ctd.Pres
+	} else {
+		ctd.Pres, _ = strconv.ParseFloat(data[4], 64)
+	}
+	if strings.HasPrefix(data[5], "s") {
+		ctd.Turb, _ = strconv.ParseFloat(strings.TrimPrefix(data[5], "s"), 64)
+		ctd.Turb = -ctd.Turb
+	} else {
+		ctd.Turb, _ = strconv.ParseFloat(data[5], 64)
+	}
+	//now calc the velocity base on the upper data
+	ctd.Vel = calcVelocity(ctd.cond, ctd.Temp, ctd.Pres, ctd.Turb)
 	return nil
+}
+
+func calcVelocity(cond float64, temp float64, pres float64, turb float64) float64 {
+	return 0.0
 }
 
 // NewQueue returns a new queue with the given initial size.
