@@ -69,7 +69,7 @@ func (p *Presure) Parse(recvbuf []byte) error {
 	}
 
 	p.P, _ = strconv.ParseFloat(data[1], 64)
-
+	p.P = p.P - 10
 	return nil
 }
 
@@ -162,12 +162,12 @@ func (ctd *Ctd6000) Parse(recvbuf []byte) error {
 		ctd.Turb, _ = strconv.ParseFloat(data[5], 64)
 	}
 	//now calc the velocity base on the upper data
-	ctd.Vel = calcVelocity(ctd.cond, ctd.Temp, ctd.Pres, ctd.Turb)
+	ctd.Vel = calcVelocity(ctd.cond, ctd.Temp, ctd.Pres)
 	return nil
 }
 
-func calcVelocity(cond float64, temp float64, pres float64, turb float64) float64 {
-	return 0.0
+func calcVelocity(cond float64, temp float64, pres float64) float64 {
+	return 1449.2 + 4.6*temp - 0.055*math.Pow(temp, 2) + 0.00029*math.Pow(temp, 3) + (1.34-0.01*temp)*(cond-35) + 0.016*pres
 }
 
 // NewQueue returns a new queue with the given initial size.

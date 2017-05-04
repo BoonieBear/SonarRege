@@ -5,10 +5,10 @@ import (
 )
 
 const (
-	BsssId        uint16 = 0x7000
-	BsssVersion   uint16 = 0x0200
-	SensorHeadId  uint16 = 0x8000
-	SensorVersion uint16 = 0x0200
+	BsssId        uint16 = 0x62
+	BsssVersion   uint16 = 0x02
+	SensorHeadId  uint16 = 0x80
+	SensorVersion uint16 = 0x02
 	APHeader      uint16 = 0x5053
 	CTD6000Header uint16 = 0x4354
 	CTD4500Header uint16 = 0x5444
