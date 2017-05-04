@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"unicode/utf16"
 )
 
@@ -257,9 +256,4 @@ func BytesToUInt(bits int32, buf []byte) uint64 {
 
 func BytesToInt(bits int32, buf []byte) int64 {
 	return int64(BytesToUInt(bits, buf))
-}
-
-//dispatch the sensor and bsss data
-func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
-	return nil
 }

@@ -44,6 +44,47 @@ func main() {
 	SetupServer(config)
 }
 
+//dispatch the sensor and bsss data
+func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
+	while len(byrecvbufte)>4 {
+	   if util.BytesToUInt(16,recvbuf)== sensor.BsssId{
+			if util.BytesToUInt(16,recvbuf[2:])==sensor.BsssVersion{
+				length:=util.BytesToUInt(16,recvbuf[4:])
+				if len(recvbuf)< length{
+					//no enough buffer
+					break;
+				}else{
+					data:= recvbuf[:length]
+					recvbuf = append(recvbuf,recvbuf[length:]...)
+					return dispatchBsss(data,queuelock)
+				}
+			}
+		}
+		if util.BytesToUInt(16,recvbuf)== sensor.SensorHeadId{
+			if util.BytesToUInt(16,recvbuf[2:])==sensor.SensorVersion{
+				length:=util.BytesToUInt(16,recvbuf[4:])
+				if len(recvbuf)< length {
+					//no enough buffer
+					break;
+				}else{
+					data:= recvbuf[:length]
+					recvbuf = append(recvbuf,recvbuf[length:]...)
+					return dispatchSensor(data,queuelock)
+				}
+			}
+		}
+		//shift 2 bytes
+		recvbuf = append(recvbuf,recvbuf[2:]...)
+	}
+	return nil
+}
+
+func dispatchBsss(recvbuf []byte, queuelock *sync.Mutex)error{
+	
+}
+func dispatchSensor(recvbuf []byte, queuelock *sync.Mutex)error{
+	
+}
 func RegenThread(cfg *util.Cfg) {
 
 }
