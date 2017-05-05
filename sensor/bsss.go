@@ -1,5 +1,9 @@
 package sensor
 
+import (
+	"regener/util"
+)
+
 type bsss struct {
 	header   bsssheadr
 	wpara    workpara
@@ -11,14 +15,10 @@ type subbottom struct {
 	header   bsssheadr
 	wpara    workpara
 	dpara    datapara
-	sbdata   []sb
+	sbdata   [16384]uint16
 	checksum uint16
 }
 
-//subbottom
-type sb struct {
-	ID uint32
-}
 type bsssheadr struct {
 	ID         int16
 	Version    int16
@@ -75,6 +75,13 @@ type datapara struct {
 }
 
 func (s *ss) Parse(recvbuf []byte) error {
+	s.ID = uint32(util.BytesToUIntBE(32, recvbuf))
+	s.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
+	s.Para = uint32(util.BytesToUIntBE(32, recvbuf[8:]))
+	s.Data = make([]float64, s.Length/4)
+	for i := 0; i < int(s.Length/4); i++ {
+		s.Data[i] = float64(util.ByteToFloat32BE(recvbuf[12+i*4:]))
+	}
 	return nil
 }
 func (b *bathy) Parse(recvbuf []byte) error {
@@ -83,17 +90,17 @@ func (b *bathy) Parse(recvbuf []byte) error {
 
 //side scan
 type ss struct {
-	ID    uint32
-	Count uint32
-	Para  uint32
-	Data  []float64 // length = Count/4
+	ID     uint32
+	Length uint32
+	Para   uint32
+	Data   []float64 // count = Length/4
 }
 
 //bathy scan
 type bathy struct {
 	ID        uint32
-	Count     uint32
+	Length    uint32
 	Para      uint32    //reserved
-	DataAngle []float64 //rad,length = Count/4/2
-	DataDelay []float64 //ms,length = Count/4/2
+	DataAngle []float64 //rad,count = Length/4/2
+	DataDelay []float64 //ms,count = Length/4/2
 }

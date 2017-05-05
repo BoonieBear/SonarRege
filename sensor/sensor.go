@@ -22,10 +22,10 @@ func extractTime(timestr string) time.Time {
 	return time.Date(year, time.Month(month), day, hour, mins, sec, msec, time.UTC)
 }
 func (ap *AP) Parse(recvbuf []byte) error {
-	if util.BytesToUInt(16, recvbuf) != uint64(APHeader) {
+	if util.BytesToUIntBE(16, recvbuf) != uint64(APHeader) {
 		return errors.New("AP Header missed!")
 	}
-	len := util.BytesToUInt(16, recvbuf[2:])
+	len := util.BytesToUIntBE(16, recvbuf[2:])
 
 	payload := string(recvbuf[4 : 4+len])
 	timestr := payload[0:20]
@@ -53,10 +53,10 @@ func (ap *AP) Parse(recvbuf []byte) error {
 }
 
 func (p *Presure) Parse(recvbuf []byte) error {
-	if util.BytesToUInt(16, recvbuf) != uint64(PresureHeader) {
+	if util.BytesToUIntBE(16, recvbuf) != uint64(PresureHeader) {
 		return errors.New("Presure Header missed!")
 	}
-	len := util.BytesToUInt(16, recvbuf[2:])
+	len := util.BytesToUIntBE(16, recvbuf[2:])
 
 	payload := string(recvbuf[4 : 4+len])
 	timestr := payload[0:20]
@@ -74,10 +74,10 @@ func (p *Presure) Parse(recvbuf []byte) error {
 }
 
 func (comp *Compass) Parse(recvbuf []byte) error {
-	if util.BytesToUInt(16, recvbuf) != uint64(CompassHeader) {
+	if util.BytesToUIntBE(16, recvbuf) != uint64(CompassHeader) {
 		return errors.New("Compass Header missed!")
 	}
-	length := util.BytesToUInt(16, recvbuf[2:])
+	length := util.BytesToUIntBE(16, recvbuf[2:])
 
 	payload := string(recvbuf[4 : 4+length])
 	timestr := payload[0:20]
@@ -102,10 +102,10 @@ func (comp *Compass) Parse(recvbuf []byte) error {
 }
 
 func (ctd *Ctd4500) Parse(recvbuf []byte) error {
-	if util.BytesToUInt(16, recvbuf) != uint64(CTD4500Header) {
+	if util.BytesToUIntBE(16, recvbuf) != uint64(CTD4500Header) {
 		return errors.New("Ctd4500 Header missed!")
 	}
-	len := util.BytesToUInt(16, recvbuf[2:])
+	len := util.BytesToUIntBE(16, recvbuf[2:])
 
 	payload := string(recvbuf[4 : 4+len])
 	timestr := payload[0:20]
@@ -123,10 +123,10 @@ func (ctd *Ctd4500) Parse(recvbuf []byte) error {
 	return nil
 }
 func (ctd *Ctd6000) Parse(recvbuf []byte) error {
-	if util.BytesToUInt(16, recvbuf) != uint64(CTD6000Header) {
+	if util.BytesToUIntBE(16, recvbuf) != uint64(CTD6000Header) {
 		return errors.New("Ctd6000 Header missed!")
 	}
-	len := util.BytesToUInt(16, recvbuf[2:])
+	len := util.BytesToUIntBE(16, recvbuf[2:])
 
 	payload := string(recvbuf[4 : 4+len])
 	timestr := payload[0:20]

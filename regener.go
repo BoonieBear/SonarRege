@@ -32,7 +32,7 @@ func main() {
 	SQMap = map[uint16]*sensor.Queue{
 		sensor.BsssId:        sensor.NewQueue(100),
 		sensor.APHeader:      sensor.NewQueue(100),
-		sensor.TCM5Header:    sensor.NewQueue(100),
+		sensor.CompassHeader: sensor.NewQueue(100),
 		sensor.CTD6000Header: sensor.NewQueue(100),
 		sensor.PresureHeader: sensor.NewQueue(100),
 	}
@@ -46,44 +46,47 @@ func main() {
 
 //dispatch the sensor and bsss data
 func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
-	while len(byrecvbufte)>4 {
-	   if util.BytesToUInt(16,recvbuf)== sensor.BsssId{
-			if util.BytesToUInt(16,recvbuf[2:])==sensor.BsssVersion{
-				length:=util.BytesToUInt(16,recvbuf[4:])
-				if len(recvbuf)< length{
+	for {
+		if len(recvbuf) < 4 {
+			break
+		}
+		if uint16(util.BytesToUIntBE(16, recvbuf)) == sensor.BsssId {
+			if uint16(util.BytesToUIntBE(16, recvbuf[2:])) == sensor.BsssVersion {
+				length := util.BytesToUIntBE(16, recvbuf[4:])
+				if len(recvbuf) < int(length) {
 					//no enough buffer
-					break;
-				}else{
-					data:= recvbuf[:length]
-					recvbuf = append(recvbuf,recvbuf[length:]...)
-					return dispatchBsss(data,queuelock)
+					break
+				} else {
+					data := recvbuf[:length]
+					recvbuf = append(recvbuf, recvbuf[length:]...)
+					return dispatchBsss(data, queuelock)
 				}
 			}
 		}
-		if util.BytesToUInt(16,recvbuf)== sensor.SensorHeadId{
-			if util.BytesToUInt(16,recvbuf[2:])==sensor.SensorVersion{
-				length:=util.BytesToUInt(16,recvbuf[4:])
-				if len(recvbuf)< length {
+		if uint16(util.BytesToUIntBE(16, recvbuf)) == sensor.SensorHeadId {
+			if uint16(util.BytesToUIntBE(16, recvbuf[2:])) == sensor.SensorVersion {
+				length := util.BytesToUIntBE(16, recvbuf[4:])
+				if len(recvbuf) < int(length) {
 					//no enough buffer
-					break;
-				}else{
-					data:= recvbuf[:length]
-					recvbuf = append(recvbuf,recvbuf[length:]...)
-					return dispatchSensor(data,queuelock)
+					break
+				} else {
+					data := recvbuf[:length]
+					recvbuf = append(recvbuf, recvbuf[length:]...)
+					return dispatchSensor(data, queuelock)
 				}
 			}
 		}
 		//shift 2 bytes
-		recvbuf = append(recvbuf,recvbuf[2:]...)
+		recvbuf = append(recvbuf, recvbuf[2:]...)
 	}
 	return nil
 }
 
-func dispatchBsss(recvbuf []byte, queuelock *sync.Mutex)error{
-	
+func dispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
+	return nil
 }
-func dispatchSensor(recvbuf []byte, queuelock *sync.Mutex)error{
-	
+func dispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
+	return nil
 }
 func RegenThread(cfg *util.Cfg) {
 
@@ -157,7 +160,7 @@ func handleConnection(conn net.Conn) {
 		}
 		if n > 0 {
 			buffer = append(buffer, buf[:n-1]...)
-			err = util.Dispatcher(buffer, maplock)
+			err = Dispatcher(buffer, maplock)
 			if err != nil {
 				logger.Println(fmt.Sprintf("Dispatcher error- ", err))
 			}

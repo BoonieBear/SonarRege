@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -218,7 +219,95 @@ func utf16toString(b []uint8) (string, error) {
 	return string(utf16.Decode(w)), nil
 }
 
-func IntToBytes(bits int32, i int64) []byte {
+//////LittleEndian//////
+func IntToBytesLE(bits int32, i int64) []byte {
+	buf := make([]byte, bits/8)
+	switch bits / 8 {
+	case 1:
+		buf[0] = byte(i)
+		return buf
+	case 2:
+		binary.LittleEndian.PutUint16(buf, uint16(i))
+		return buf
+	case 4:
+		binary.LittleEndian.PutUint32(buf, uint32(i))
+		return buf
+	case 8:
+		binary.LittleEndian.PutUint64(buf, uint64(i))
+		return buf
+	default:
+		return nil
+
+	}
+}
+func UIntToBytesLE(bits int32, i uint64) []byte {
+	buf := make([]byte, bits/8)
+	switch bits / 8 {
+	case 1:
+		buf[0] = byte(i)
+		return buf
+	case 2:
+		binary.LittleEndian.PutUint16(buf, uint16(i))
+		return buf
+	case 4:
+		binary.LittleEndian.PutUint32(buf, uint32(i))
+		return buf
+	case 8:
+		binary.LittleEndian.PutUint64(buf, uint64(i))
+		return buf
+	default:
+		return nil
+
+	}
+}
+func BytesToUIntLE(bits int32, buf []byte) uint64 {
+	switch bits / 8 {
+	case 1:
+		return uint64(buf[0])
+	case 2:
+		return uint64(binary.LittleEndian.Uint16(buf))
+	case 4:
+		return uint64(binary.LittleEndian.Uint32(buf))
+	case 8:
+		return uint64(binary.LittleEndian.Uint64(buf))
+	default:
+		return 0
+	}
+}
+
+func BytesToIntLE(bits int32, buf []byte) int64 {
+	return int64(BytesToUIntLE(bits, buf))
+}
+func Float32ToByteLE(float float32) []byte {
+	bits := math.Float32bits(float)
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, bits)
+
+	return bytes
+}
+
+func ByteToFloat32LE(bytes []byte) float32 {
+	bits := binary.LittleEndian.Uint32(bytes)
+
+	return math.Float32frombits(bits)
+}
+
+func Float64ToByteLE(float float64) []byte {
+	bits := math.Float64bits(float)
+	bytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bytes, bits)
+
+	return bytes
+}
+
+func ByteToFloat64LE(bytes []byte) float64 {
+	bits := binary.LittleEndian.Uint64(bytes)
+
+	return math.Float64frombits(bits)
+}
+
+//////BigEndian//////
+func IntToBytesBE(bits int32, i int64) []byte {
 	buf := make([]byte, bits/8)
 	switch bits / 8 {
 	case 1:
@@ -238,8 +327,27 @@ func IntToBytes(bits int32, i int64) []byte {
 
 	}
 }
+func UIntToBytesBE(bits int32, i uint64) []byte {
+	buf := make([]byte, bits/8)
+	switch bits / 8 {
+	case 1:
+		buf[0] = byte(i)
+		return buf
+	case 2:
+		binary.BigEndian.PutUint16(buf, uint16(i))
+		return buf
+	case 4:
+		binary.BigEndian.PutUint32(buf, uint32(i))
+		return buf
+	case 8:
+		binary.BigEndian.PutUint64(buf, uint64(i))
+		return buf
+	default:
+		return nil
 
-func BytesToUInt(bits int32, buf []byte) uint64 {
+	}
+}
+func BytesToUIntBE(bits int32, buf []byte) uint64 {
 	switch bits / 8 {
 	case 1:
 		return uint64(buf[0])
@@ -254,6 +362,33 @@ func BytesToUInt(bits int32, buf []byte) uint64 {
 	}
 }
 
-func BytesToInt(bits int32, buf []byte) int64 {
-	return int64(BytesToUInt(bits, buf))
+func BytesToIntBE(bits int32, buf []byte) int64 {
+	return int64(BytesToUIntBE(bits, buf))
+}
+func Float32ToByteBE(float float32) []byte {
+	bits := math.Float32bits(float)
+	bytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(bytes, bits)
+
+	return bytes
+}
+
+func ByteToFloat32BE(bytes []byte) float32 {
+	bits := binary.BigEndian.Uint32(bytes)
+
+	return math.Float32frombits(bits)
+}
+
+func Float64ToByteBE(float float64) []byte {
+	bits := math.Float64bits(float)
+	bytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(bytes, bits)
+
+	return bytes
+}
+
+func ByteToFloat64BE(bytes []byte) float64 {
+	bits := binary.BigEndian.Uint64(bytes)
+
+	return math.Float64frombits(bits)
 }
