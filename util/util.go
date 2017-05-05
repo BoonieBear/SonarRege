@@ -5,11 +5,14 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	//	"io/ioutil"
 	"log"
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf16"
 )
 
@@ -391,4 +394,80 @@ func ByteToFloat64BE(bytes []byte) float64 {
 	bits := binary.BigEndian.Uint64(bytes)
 
 	return math.Float64frombits(bits)
+}
+
+//save file
+type tracefile struct {
+	writer    *bufio.Writer
+	File      *os.File
+	Count     uint32
+	FileName  string
+	MaxSize   uint32
+	FileIndex uint16
+}
+
+func (tf *tracefile) New(pre string, maxlength uint32) error {
+	if tf.writer != nil {
+		return errors.New("Already create a trace file instance")
+	}
+	t := time.Now().Format("060102150405")
+	path, _ := os.Getwd()
+	tf.FileName = filepath.Join(path, pre+t+"-1")
+	tf.MaxSize = maxlength
+
+	var err error
+	tf.File, err = os.Create(tf.FileName) //create file
+	if err != nil {
+		return err
+	}
+	tf.FileIndex = 1
+	tf.Count = 0
+	tf.writer = bufio.NewWriter(tf.File)
+	return nil
+}
+func (tf *tracefile) Write(bytes []byte) error {
+	if tf.writer == nil {
+		return errors.New("no valid trace file")
+	}
+	n, err := tf.writer.Write(bytes)
+
+	if err != nil {
+		if tf.File != nil {
+			tf.File.Close()
+		}
+		return err
+	}
+	err = tf.writer.Flush()
+	if err != nil {
+		if tf.File != nil {
+			tf.File.Close()
+		}
+		return err
+	}
+	tf.Count += uint32(n)
+	if tf.Count > tf.MaxSize {
+		tf.Close()
+		filename := strings.Split(filepath.Base(tf.FileName), "-")[0]
+
+		tf.FileIndex += 1
+		path, _ := os.Getwd()
+		tf.FileName = filepath.Join(path, filename+"-"+strconv.Itoa(int(tf.FileIndex)))
+
+		tf.File, err = os.Create(tf.FileName) //create file
+		if err != nil {
+			return err
+		}
+
+		tf.Count = 0
+		tf.writer = bufio.NewWriter(tf.File)
+	}
+	return nil
+}
+func (tf *tracefile) Close() {
+	if tf.writer != nil {
+		tf.writer.Flush()
+	}
+	if tf.File != nil {
+		tf.File.Close()
+	}
 }

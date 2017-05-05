@@ -19,36 +19,6 @@ type subbottom struct {
 	checksum uint16
 }
 
-type bsssheadr struct {
-	ID         int16
-	Version    int16
-	PackageLen int32
-}
-
-type workpara struct {
-	Serial           int16 //0~0xFFFF
-	PulseLen         int16 //x671/2^26 sec
-	PortStartFq      int32 //x2Hz
-	StarboardFq      int32 //x2Hz
-	PortChirpFq      int32 //x16Hz/s
-	StarboardChirpFq int32 //x16Hz/s
-	RecvLatecy       int16 //x671/2^26 sec
-	Sampling         int16
-	EmitInterval     int16 //×1/16384 sec
-	RelativeGain     int16
-	StatusFlag       int16
-	TVGLatecy        int16 //×67/2^26
-	TVGRefRate       int16
-	TVGCtrl          int16
-	TVGFactor        int16 //x0.1
-	TVGAntenu        int16 //×0.00001dB/m
-	TVGGain          int16 //×0.1dB
-	RetFlag          int16
-	CMDFlag          int32
-	FixedTVG         int32
-	Reserved         int32
-}
-
 const (
 	ADID            uint16 = 0x01
 	ReserveID       uint16 = 0x02
@@ -59,6 +29,36 @@ const (
 	PortVector      uint16 = 0x40
 	StarboardVector uint16 = 0x80
 )
+
+type bsssheadr struct {
+	ID         uint16
+	Version    uint16
+	PackageLen uint32
+}
+
+type workpara struct {
+	Serial           uint16 //0~0xFFFF
+	PulseLen         uint16 //x671/2^26 sec
+	PortStartFq      uint32 //x2Hz
+	StarboardFq      uint32 //x2Hz
+	PortChirpFq      uint32 //x16Hz/s
+	StarboardChirpFq uint32 //x16Hz/s
+	RecvLatecy       uint16 //x671/2^26 sec
+	Sampling         uint16
+	EmitInterval     uint16 //×1/16384 sec
+	RelativeGain     uint16
+	StatusFlag       uint16
+	TVGLatecy        uint16 //×67/2^26
+	TVGRefRate       uint16
+	TVGCtrl          uint16
+	TVGFactor        uint16 //x0.1
+	TVGAntenu        uint16 //×0.00001dB/m
+	TVGGain          uint16 //×0.1dB
+	RetFlag          uint16
+	CMDFlag          uint32
+	FixedTVG         uint32
+	Reserved         uint32
+}
 
 type datapara struct {
 	DataID         uint16
@@ -74,6 +74,15 @@ type datapara struct {
 	Reserve1       [3]uint16
 }
 
+func (header *bsssheadr) Parse(recvbuf []byte) {
+
+}
+func (w *workpara) Parse(recvbuf []byte) {
+
+}
+func (d *datapara) Parse(recvbuf []byte) {
+
+}
 func (s *ss) Parse(recvbuf []byte) error {
 	s.ID = uint32(util.BytesToUIntBE(32, recvbuf))
 	s.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
@@ -85,6 +94,17 @@ func (s *ss) Parse(recvbuf []byte) error {
 	return nil
 }
 func (b *bathy) Parse(recvbuf []byte) error {
+	b.ID = uint32(util.BytesToUIntBE(32, recvbuf))
+	b.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
+	b.Para = uint32(util.BytesToUIntBE(32, recvbuf[8:]))
+	b.DataAngle = make([]float64, b.Length/4/2)
+	for i := 0; i < int(b.Length/4/2); i++ {
+		b.DataAngle[i] = float64(util.ByteToFloat32BE(recvbuf[12+i*4:]))
+	}
+	b.DataDelay = make([]float64, b.Length/4/2)
+	for i := int(b.Length / 4 / 2); i < int(b.Length/4); i++ {
+		b.DataDelay[i] = float64(util.ByteToFloat32BE(recvbuf[12+i*4:]))
+	}
 	return nil
 }
 
