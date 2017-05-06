@@ -4,19 +4,19 @@ import (
 	"regener/util"
 )
 
-type bsss struct {
-	header   bsssheadr
-	wpara    workpara
-	dpara    datapara
-	payload  []ISensor
-	checksum uint16
+type Bsss struct {
+	Header   Bsssheadr
+	Wpara    Workpara
+	Dpara    Datapara
+	Payload  []ISensor
+	Checksum uint16
 }
-type subbottom struct {
-	header   bsssheadr
-	wpara    workpara
-	dpara    datapara
-	sbdata   [16384]uint16
-	checksum uint16
+type Subbottom struct {
+	Header   Bsssheadr
+	Wpara    Workpara
+	Dpara    Datapara
+	Sbdata   [16384]uint16
+	Checksum uint16
 }
 
 const (
@@ -30,13 +30,13 @@ const (
 	StarboardVector uint16 = 0x80
 )
 
-type bsssheadr struct {
+type Bsssheadr struct {
 	ID         uint16
 	Version    uint16
 	PackageLen uint32
 }
 
-type workpara struct {
+type Workpara struct {
 	Serial           uint16 //0~0xFFFF
 	PulseLen         uint16 //x671/2^26 sec
 	PortStartFq      uint32 //x2Hz
@@ -60,7 +60,7 @@ type workpara struct {
 	Reserved         uint32
 }
 
-type datapara struct {
+type Datapara struct {
 	DataID         uint16
 	IsNewEmit      uint16
 	EmitCount      uint32
@@ -75,7 +75,7 @@ type datapara struct {
 }
 
 //side scan
-type ss struct {
+type Ss struct {
 	ID     uint32
 	Length uint32
 	Para   uint32
@@ -83,7 +83,7 @@ type ss struct {
 }
 
 //bathy scan
-type bathy struct {
+type Bathy struct {
 	ID        uint32
 	Length    uint32
 	Para      uint32    //reserved
@@ -91,31 +91,50 @@ type bathy struct {
 	DataDelay []float64 //ms,count = Length/4/2
 }
 
-func (bsss *bsss) Parse(recvbuf []byte) {
-	bsss.header.Parse(recvbuf)
-	bsss.wpara.Parse(recvbuf[8:])
-	bsss.dpara.Parse(recvbuf[64:])
-	datalength := bsss.header.PackageLen - 106
+func (bsss *Bsss) Parse(recvbuf []byte) error {
+	bsss.Header.Parse(recvbuf)
+	bsss.Wpara.Parse(recvbuf[8:])
+	bsss.Dpara.Parse(recvbuf[64:])
+
 	index := 104 //shift index byte
 	for {
 		switch uint16(util.BytesToUIntBE(16, recvbuf[index:])) {
 		case PortByID:
-			datalength -= 10
+		case StarboardByID:
+			by := &Bathy{}
+			by.Parse(recvbuf[index:])
+			bsss.Payload = append(bsss.Payload, by)
+			index = index + 12 + int(by.Length)
+		case PortSSID:
+		case StarboardSSID:
+			s := &Ss{}
+			s.Parse(recvbuf[index:])
+			bsss.Payload = append(bsss.Payload, s)
+			index = index + 12 + int(s.Length)
+		}
+		if index+2 == int(bsss.Header.PackageLen) {
+			break
 		}
 	}
+	return nil
 }
 
-func (sub *subbottom) Parse(recvbuf []byte) {
-	sub.header.Parse(recvbuf)
-
+func (sub *Subbottom) Parse(recvbuf []byte) error {
+	sub.Header.Parse(recvbuf)
+	sub.Wpara.Parse(recvbuf[8:])
+	sub.Dpara.Parse(recvbuf[64:])
+	for i, _ := range sub.Sbdata {
+		sub.Sbdata[i] = uint16(util.BytesToUIntBE(16, recvbuf[104+2*i:]))
+	}
+	return nil
 }
 
-func (header *bsssheadr) Parse(recvbuf []byte) {
+func (header *Bsssheadr) Parse(recvbuf []byte) {
 	header.ID = uint16(util.BytesToUIntBE(16, recvbuf))
 	header.Version = uint16(util.BytesToUIntBE(16, recvbuf[2:]))
 	header.PackageLen = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
 }
-func (w *workpara) Parse(recvbuf []byte) {
+func (w *Workpara) Parse(recvbuf []byte) {
 	w.Serial = uint16(util.BytesToUIntBE(16, recvbuf))
 	w.PulseLen = uint16(util.BytesToUIntBE(16, recvbuf[2:]))
 	w.PortStartFq = uint32(util.BytesToUIntBE(32, recvbuf[4:]))       //x2Hz
@@ -138,7 +157,7 @@ func (w *workpara) Parse(recvbuf []byte) {
 	w.FixedTVG = uint32(util.BytesToUIntBE(32, recvbuf[48:]))
 	w.Reserved = uint32(util.BytesToUIntBE(32, recvbuf[52:]))
 }
-func (d *datapara) Parse(recvbuf []byte) {
+func (d *Datapara) Parse(recvbuf []byte) {
 	d.DataID = uint16(util.BytesToUIntBE(16, recvbuf))
 	d.IsNewEmit = uint16(util.BytesToUIntBE(16, recvbuf[2:]))
 	d.EmitCount = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
@@ -153,7 +172,7 @@ func (d *datapara) Parse(recvbuf []byte) {
 	d.Reserve1[1] = uint16(util.BytesToUIntBE(16, recvbuf[36:]))
 	d.Reserve1[2] = uint16(util.BytesToUIntBE(16, recvbuf[38:]))
 }
-func (s *ss) Parse(recvbuf []byte) error {
+func (s *Ss) Parse(recvbuf []byte) error {
 	s.ID = uint32(util.BytesToUIntBE(32, recvbuf))
 	s.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
 	s.Para = uint32(util.BytesToUIntBE(32, recvbuf[8:]))
@@ -163,7 +182,7 @@ func (s *ss) Parse(recvbuf []byte) error {
 	}
 	return nil
 }
-func (b *bathy) Parse(recvbuf []byte) error {
+func (b *Bathy) Parse(recvbuf []byte) error {
 	b.ID = uint32(util.BytesToUIntBE(32, recvbuf))
 	b.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
 	b.Para = uint32(util.BytesToUIntBE(32, recvbuf[8:]))

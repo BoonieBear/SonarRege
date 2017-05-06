@@ -9,6 +9,7 @@ const (
 	BsssVersion   uint16 = 0x02
 	SensorHeadId  uint16 = 0x80
 	SensorVersion uint16 = 0x02
+	SubbottomId   uint16 = 0x63
 	APHeader      uint16 = 0x5053
 	CTD6000Header uint16 = 0x4354
 	CTD4500Header uint16 = 0x5444
@@ -77,14 +78,14 @@ type Presure struct {
 }
 
 //
-type node struct {
+type Node struct {
 	Time time.Time
 	Data ISensor
 }
 
 // Queue is a basic FIFO queue based on a circular list that resizes as needed.
 type Queue struct {
-	nodes []*node
+	nodes []*Node
 	size  int
 	head  int
 	tail  int

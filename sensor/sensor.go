@@ -173,13 +173,13 @@ func calcVelocity(cond float64, temp float64, pres float64) float64 {
 // NewQueue returns a new queue with the given initial size.
 func NewQueue(size int) *Queue {
 	return &Queue{
-		nodes: make([]*node, size),
+		nodes: make([]*Node, size),
 		size:  size,
 	}
 }
 
 // Push a node to the queue. If count ==size, then pop the oldest one and push the new node
-func (q *Queue) Push(n *node) {
+func (q *Queue) Push(n *Node) {
 	if q.head == q.tail && q.count > 0 {
 		q.Pop()
 	}
@@ -189,7 +189,7 @@ func (q *Queue) Push(n *node) {
 }
 
 // Pop removes and returns a node from the queue in first to last order.
-func (q *Queue) Pop() *node {
+func (q *Queue) Pop() *Node {
 	if q.count == 0 {
 		return nil
 	}
@@ -200,7 +200,7 @@ func (q *Queue) Pop() *node {
 }
 
 //just read the head nodes and don`t change inner structure
-func (q *Queue) Watch() *node {
+func (q *Queue) Watch() *Node {
 	if q.count == 0 {
 		return nil
 	}
@@ -211,7 +211,7 @@ func (q *Queue) Watch() *node {
 //return mergerd data of given time
 func (q *Queue) FetchData(mergertime time.Time) ISensor {
 
-	var fst_node, snd_node *node
+	var fst_node, snd_node *Node
 	for {
 		if q.count == 0 {
 			break
