@@ -74,14 +74,84 @@ type datapara struct {
 	Reserve1       [3]uint16
 }
 
-func (header *bsssheadr) Parse(recvbuf []byte) {
+//side scan
+type ss struct {
+	ID     uint32
+	Length uint32
+	Para   uint32
+	Data   []float64 // count = Length/4
+}
 
+//bathy scan
+type bathy struct {
+	ID        uint32
+	Length    uint32
+	Para      uint32    //reserved
+	DataAngle []float64 //rad,count = Length/4/2
+	DataDelay []float64 //ms,count = Length/4/2
+}
+
+func (bsss *bsss) Parse(recvbuf []byte) {
+	bsss.header.Parse(recvbuf)
+	bsss.wpara.Parse(recvbuf[8:])
+	bsss.dpara.Parse(recvbuf[64:])
+	datalength := bsss.header.PackageLen - 106
+	index := 104 //shift index byte
+	for {
+		switch uint16(util.BytesToUIntBE(16, recvbuf[index:])) {
+		case PortByID:
+			datalength -= 10
+		}
+	}
+}
+
+func (sub *subbottom) Parse(recvbuf []byte) {
+	sub.header.Parse(recvbuf)
+
+}
+
+func (header *bsssheadr) Parse(recvbuf []byte) {
+	header.ID = uint16(util.BytesToUIntBE(16, recvbuf))
+	header.Version = uint16(util.BytesToUIntBE(16, recvbuf[2:]))
+	header.PackageLen = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
 }
 func (w *workpara) Parse(recvbuf []byte) {
-
+	w.Serial = uint16(util.BytesToUIntBE(16, recvbuf))
+	w.PulseLen = uint16(util.BytesToUIntBE(16, recvbuf[2:]))
+	w.PortStartFq = uint32(util.BytesToUIntBE(32, recvbuf[4:]))       //x2Hz
+	w.StarboardFq = uint32(util.BytesToUIntBE(32, recvbuf[8:]))       //x2Hz
+	w.PortChirpFq = uint32(util.BytesToUIntBE(32, recvbuf[12:]))      //x16Hz/s
+	w.StarboardChirpFq = uint32(util.BytesToUIntBE(32, recvbuf[16:])) //x16Hz/s
+	w.RecvLatecy = uint16(util.BytesToUIntBE(16, recvbuf[20:]))       //x671/2^26 sec
+	w.Sampling = uint16(util.BytesToUIntBE(16, recvbuf[22:]))
+	w.EmitInterval = uint16(util.BytesToUIntBE(16, recvbuf[24:])) //×1/16384 sec
+	w.RelativeGain = uint16(util.BytesToUIntBE(16, recvbuf[26:]))
+	w.StatusFlag = uint16(util.BytesToUIntBE(16, recvbuf[28:]))
+	w.TVGLatecy = uint16(util.BytesToUIntBE(16, recvbuf[30:])) //×67/2^26
+	w.TVGRefRate = uint16(util.BytesToUIntBE(16, recvbuf[32:]))
+	w.TVGCtrl = uint16(util.BytesToUIntBE(16, recvbuf[34:]))
+	w.TVGFactor = uint16(util.BytesToUIntBE(16, recvbuf[36:])) //x0.1
+	w.TVGAntenu = uint16(util.BytesToUIntBE(16, recvbuf[38:])) //×0.00001dB/m
+	w.TVGGain = uint16(util.BytesToUIntBE(16, recvbuf[40:]))   //×0.1dB
+	w.RetFlag = uint16(util.BytesToUIntBE(16, recvbuf[42:]))
+	w.CMDFlag = uint32(util.BytesToUIntBE(32, recvbuf[44:]))
+	w.FixedTVG = uint32(util.BytesToUIntBE(32, recvbuf[48:]))
+	w.Reserved = uint32(util.BytesToUIntBE(32, recvbuf[52:]))
 }
 func (d *datapara) Parse(recvbuf []byte) {
-
+	d.DataID = uint16(util.BytesToUIntBE(16, recvbuf))
+	d.IsNewEmit = uint16(util.BytesToUIntBE(16, recvbuf[2:]))
+	d.EmitCount = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
+	d.Reserved = uint32(util.BytesToUIntBE(32, recvbuf[8:]))
+	d.DataParaID = uint32(util.BytesToUIntBE(32, recvbuf[12:])) //share value as ID
+	d.EmitShiftPoint = uint32(util.BytesToUIntBE(32, recvbuf[16:]))
+	d.EmitTime1st = uint32(util.BytesToUIntBE(32, recvbuf[20:]))
+	d.EmitTime2nd = uint32(util.BytesToUIntBE(32, recvbuf[24:]))
+	d.Velocity = uint32(util.BytesToUIntBE(32, recvbuf[28:]))
+	d.DataCount = uint16(util.BytesToUIntBE(16, recvbuf[32:]))
+	d.Reserve1[0] = uint16(util.BytesToUIntBE(16, recvbuf[34:]))
+	d.Reserve1[1] = uint16(util.BytesToUIntBE(16, recvbuf[36:]))
+	d.Reserve1[2] = uint16(util.BytesToUIntBE(16, recvbuf[38:]))
 }
 func (s *ss) Parse(recvbuf []byte) error {
 	s.ID = uint32(util.BytesToUIntBE(32, recvbuf))
@@ -106,21 +176,4 @@ func (b *bathy) Parse(recvbuf []byte) error {
 		b.DataDelay[i] = float64(util.ByteToFloat32BE(recvbuf[12+i*4:]))
 	}
 	return nil
-}
-
-//side scan
-type ss struct {
-	ID     uint32
-	Length uint32
-	Para   uint32
-	Data   []float64 // count = Length/4
-}
-
-//bathy scan
-type bathy struct {
-	ID        uint32
-	Length    uint32
-	Para      uint32    //reserved
-	DataAngle []float64 //rad,count = Length/4/2
-	DataDelay []float64 //ms,count = Length/4/2
 }
