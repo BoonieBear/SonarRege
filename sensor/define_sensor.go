@@ -10,6 +10,8 @@ const (
 	SensorHeadId  uint16 = 0x80
 	SensorVersion uint16 = 0x02
 	SubbottomId   uint16 = 0x63
+	SSId          uint16 = 0x6201 //customize id for startboard/port side scan
+	BathyId       uint16 = 0x6202 //customize id for bathy
 	APHeader      uint16 = 0x5053
 	CTD6000Header uint16 = 0x4354
 	CTD4500Header uint16 = 0x5444

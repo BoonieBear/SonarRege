@@ -43,6 +43,6 @@ func (bathy *Bathy) Init() {
 	bathy.Header.Channel[4].Samples = 56
 
 }
-func (bathy *Bathy) Parse(recvbuf []int8) error {
+func (bathy *Bathy) Pack() []byte {
 	return nil
 }

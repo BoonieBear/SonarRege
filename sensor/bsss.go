@@ -91,6 +91,25 @@ type Bathy struct {
 	DataDelay []float64 //ms,count = Length/4/2
 }
 
+//ss struct for star/port ss
+type DuSs struct {
+	PortSs      *Ss
+	StarboardSs *Ss
+}
+
+func (duss *DuSs) Parse(recvbuf []byte) error {
+	return nil
+}
+
+//Bathy struct for star/port bathy
+type DuBathy struct {
+	PortBathy      *Bathy
+	StarboardBathy *Bathy
+}
+
+func (duby *DuBathy) Parse(recvbuf []byte) error {
+	return nil
+}
 func (bsss *Bsss) Parse(recvbuf []byte) error {
 	bsss.Header.Parse(recvbuf)
 	bsss.Wpara.Parse(recvbuf[8:])

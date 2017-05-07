@@ -30,7 +30,8 @@ func main() {
 
 	//logger.Println("Create queue map for sensor data......")
 	SQMap = map[uint16]*sensor.Queue{
-		sensor.BsssId:        sensor.NewQueue(100),
+		sensor.SSId:          sensor.NewQueue(100),
+		sensor.BathyId:       sensor.NewQueue(100),
 		sensor.SubbottomId:   sensor.NewQueue(100),
 		sensor.APHeader:      sensor.NewQueue(100),
 		sensor.CompassHeader: sensor.NewQueue(100),
@@ -100,16 +101,52 @@ func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 func dispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 	bs := &sensor.Bsss{}
 	bs.Parse(recvbuf)
-	node := &sensor.Node{
-		Time: time.Unix(int64(bs.Dpara.EmitTime1st), int64(bs.Dpara.EmitTime2nd*1000)),
-		Data: bs,
+	duby := &sensor.DuBathy{}
+	duss := &sensor.DuSs{}
+	var hasBy, hasSs bool
+	for _, v := range bs.Payload {
+		if value, ok := v.(sensor.PortByID); ok {
+			duby.PortBathy = value
+			hasBy = true
+		}
+		if value, ok := v.(sensor.StarboardByID); ok {
+			duby.StarboardBathy = value
+			hasBy = true
+		}
+		if value, ok := v.(sensor.PortSSID); ok {
+			duss.PortSs = value
+			hasSs = true
+		}
+		if value, ok := v.(sensor.StarboardSSID); ok {
+			duss.StarboardSs = value
+			hasSs = true
+		}
 	}
-	queuelock.Lock()
-	if queue, ok := SQMap[sensor.BsssId]; ok {
+	if hasSs {
+		node := &sensor.Node{
+			Time: time.Unix(int64(bs.Dpara.EmitTime1st), int64(bs.Dpara.EmitTime2nd*1000)),
+			Data: duss,
+		}
+		queuelock.Lock()
+		if queue, ok := SQMap[sensor.SSId]; ok {
 
-		queue.Push(node)
+			queue.Push(node)
+		}
+		queuelock.Unlock()
 	}
-	queuelock.Unlock()
+	if hasBy {
+		node := &sensor.Node{
+			Time: time.Unix(int64(bs.Dpara.EmitTime1st), int64(bs.Dpara.EmitTime2nd*1000)),
+			Data: duby,
+		}
+		queuelock.Lock()
+		if queue, ok := SQMap[sensor.BathyId]; ok {
+
+			queue.Push(node)
+		}
+		queuelock.Unlock()
+	}
+
 	return nil
 }
 func dispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
@@ -240,6 +277,7 @@ func dispatchSub(recvbuf []byte, queuelock *sync.Mutex) error {
 	queuelock.Unlock()
 	return nil
 }
+func 
 func RegenThread(cfg *util.Cfg) {
 
 }
@@ -311,13 +349,13 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 		if n > 0 {
-			buffer = append(buffer, buf[:n-1]...)
+			buffer = append(buffer, buf[:n]...)
 			err = Dispatcher(buffer, maplock)
 			if err != nil {
 				logger.Println(fmt.Sprintf("Dispatcher error- ", err))
 			}
 			if RelayEnable {
-				RelayChan <- buf[:n-1]
+				RelayChan <- buf[:n]
 			}
 
 		}

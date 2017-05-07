@@ -14,3 +14,8 @@ func (sonar *Sonar) Init() {
 	//data sample type and size:0 = 1 byte integer 1 = 2 byte integer 2 = 4 byte integer 3 = 4 byte float 4 = 12 byte set of three floats - range, theta, amp */
 	header.Channel[0].Size = 1
 }
+
+func (sonar *Sonar) Pack() []byte {
+	var buf []byte
+	return buf
+}
