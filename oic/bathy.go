@@ -1,6 +1,10 @@
 // structure
 package oic
 
+import (
+	"regener/util"
+)
+
 //initialize bathy struct ,call OIC initialize
 func (bathy *Bathy) Init() {
 	header := &bathy.Header
@@ -44,5 +48,18 @@ func (bathy *Bathy) Init() {
 
 }
 func (bathy *Bathy) Pack() []byte {
-	return nil
+	buf := bathy.Header.Pack()
+	for i := 0; i < len(bathy.PortAngle); i++ {
+		buf = append(buf, util.Float32ToByteBE(bathy.PortAngle[i])...)
+	}
+	for i := 0; i < len(bathy.PortR); i++ {
+		buf = append(buf, util.Float32ToByteBE(bathy.PortR[i])...)
+	}
+	for i := 0; i < len(bathy.StarboardAngle); i++ {
+		buf = append(buf, util.Float32ToByteBE(bathy.StarboardAngle[i])...)
+	}
+	for i := 0; i < len(bathy.StarboardR); i++ {
+		buf = append(buf, util.Float32ToByteBE(bathy.StarboardR[i])...)
+	}
+	return buf
 }

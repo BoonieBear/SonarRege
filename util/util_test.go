@@ -6,7 +6,7 @@ import (
 )
 
 func TestLoadCfg(t *testing.T) {
-	cfg := LoadCfg(".\\..\\cfg.ini")
+	cfg := LoadCfg("cfg.ini")
 	if cfg == nil {
 		t.Error("invalid configuration!")
 	} else {
@@ -32,7 +32,7 @@ func TestWriteTraceFile(t *testing.T) {
 	}
 	for i := 0; i < 10; i++ {
 		bytes := make([]byte, 600)
-		err = tfile.Write(bytes)
+		err = tfile.Write(bytes, true)
 
 		if err != nil {
 			t.Error(err.Error())

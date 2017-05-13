@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"regener/oic"
 	"regener/sensor"
 	"regener/util"
 	"strconv"
@@ -105,20 +106,23 @@ func dispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 	duss := &sensor.DuSs{}
 	var hasBy, hasSs bool
 	for _, v := range bs.Payload {
-		if value, ok := v.(sensor.PortByID); ok {
-			duby.PortBathy = value
+		if value, ok := v.(*sensor.Bathy); ok {
+			bathy := value
+			if bathy.ID == uint32(sensor.PortByID) {
+				duby.PortBathy = value
+			} else {
+				duby.StarboardBathy = value
+			}
 			hasBy = true
 		}
-		if value, ok := v.(sensor.StarboardByID); ok {
-			duby.StarboardBathy = value
-			hasBy = true
-		}
-		if value, ok := v.(sensor.PortSSID); ok {
-			duss.PortSs = value
-			hasSs = true
-		}
-		if value, ok := v.(sensor.StarboardSSID); ok {
-			duss.StarboardSs = value
+
+		if value, ok := v.(*sensor.Ss); ok {
+			ss := value
+			if ss.ID == uint32(sensor.PortSSID) {
+				duss.PortSs = value
+			} else {
+				duss.StarboardSs = value
+			}
 			hasSs = true
 		}
 	}
@@ -277,7 +281,46 @@ func dispatchSub(recvbuf []byte, queuelock *sync.Mutex) error {
 	queuelock.Unlock()
 	return nil
 }
-func 
+func MergeOICBathy(by *oic.Bathy, data *sensor.MixData) []byte {
+	if data.Ap != nil {
+
+	}
+	if data.Comp != nil {
+
+	}
+	if data.Ctd45 != nil {
+
+	}
+	if data.Ctd60 != nil {
+
+	}
+	if data.Pre != nil {
+
+	}
+	//by should be merged already
+
+	return by.Pack()
+}
+func MergeOICSonar(sonar *oic.Sonar, data *sensor.MixData) []byte {
+	if data.Ap != nil {
+
+	}
+	if data.Comp != nil {
+
+	}
+	if data.Ctd45 != nil {
+
+	}
+	if data.Ctd60 != nil {
+
+	}
+	if data.Pre != nil {
+
+	}
+	//by should be merged already
+
+	return sonar.Pack()
+}
 func RegenThread(cfg *util.Cfg) {
 
 }

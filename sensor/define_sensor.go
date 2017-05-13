@@ -79,6 +79,14 @@ type Presure struct {
 	P    float64
 }
 
+type MixData struct {
+	Ap    *AP
+	Comp  *Compass
+	Ctd45 *Ctd4500
+	Ctd60 *Ctd6000
+	Pre   *Presure
+}
+
 //
 type Node struct {
 	Time time.Time

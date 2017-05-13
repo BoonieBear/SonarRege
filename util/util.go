@@ -425,7 +425,7 @@ func (tf *tracefile) New(pre string, maxlength uint32) error {
 	tf.writer = bufio.NewWriter(tf.File)
 	return nil
 }
-func (tf *tracefile) Write(bytes []byte) error {
+func (tf *tracefile) Write(bytes []byte, reopen bool) error {
 	if tf.writer == nil {
 		return errors.New("no valid trace file")
 	}
@@ -445,7 +445,7 @@ func (tf *tracefile) Write(bytes []byte) error {
 		return err
 	}
 	tf.Count += uint32(n)
-	if tf.Count > tf.MaxSize {
+	if reopen || tf.Count > tf.MaxSize {
 		tf.Close()
 		filename := strings.Split(filepath.Base(tf.FileName), "-")[0]
 

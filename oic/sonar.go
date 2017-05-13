@@ -1,6 +1,10 @@
 // structure
 package oic
 
+import (
+	"regener/util"
+)
+
 //initialize sonar struct ,call OIC initialize
 func (sonar *Sonar) Init() {
 	header := &sonar.Header
@@ -16,6 +20,16 @@ func (sonar *Sonar) Init() {
 }
 
 func (sonar *Sonar) Pack() []byte {
-	var buf []byte
+	buf := sonar.Header.Pack()
+	for i := 0; i < len(sonar.PortSidescan); i++ {
+		buf = append(buf, util.IntToBytesBE(16, int64(sonar.PortSidescan[i]))...)
+	}
+	for i := 0; i < len(sonar.StarboardSidescan); i++ {
+		buf = append(buf, util.IntToBytesBE(16, int64(sonar.StarboardSidescan[i]))...)
+	}
+	for i := 0; i < len(sonar.SubBottom); i++ {
+		buf = append(buf, util.IntToBytesBE(16, int64(sonar.SubBottom[i]))...)
+	}
+
 	return buf
 }
