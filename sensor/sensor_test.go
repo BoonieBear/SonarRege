@@ -62,9 +62,6 @@ func TestWatch(t *testing.T) {
 		t.Fatal("Watch Failed!")
 	}
 }
-func TestFetchData(t *testing.T) {
-
-}
 
 func TestParseAP(t *testing.T) {
 	s := []byte("$APS,15.66028,N,116.68867,W,20140503,2354*61\r\n")

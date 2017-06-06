@@ -12,11 +12,17 @@ import (
 	"time"
 )
 
-var RelayEnable bool = false
-var RelayChan chan []byte = make(chan []byte, 100)
+//RelayEnable relay socket enable
+var RelayEnable = false
+
+//RelayChan chan between socket conn and relay thread
+var RelayChan = make(chan []byte, 100)
 var logger = new(util.Logger)
+
+//SQMap external data queue map
 var SQMap map[uint16]*sensor.Queue
 var maplock = new(sync.Mutex)
+var trace = &tracefile{}
 
 func main() {
 	logger.New("regener.log")
@@ -48,7 +54,7 @@ func main() {
 	SetupServer(config)
 }
 
-//dispatch the sensor and bsss data
+//Dispatcher dispatch the sensor and bsss data
 func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 	for {
 		if len(recvbuf) < 4 {
@@ -281,51 +287,122 @@ func dispatchSub(recvbuf []byte, queuelock *sync.Mutex) error {
 	queuelock.Unlock()
 	return nil
 }
+
+//MergeOICBathy add sensor data to bathy structure
 func MergeOICBathy(by *oic.Bathy, data *sensor.MixData) []byte {
 	if data.Ap != nil {
-
+		by.Header.NavFixLatitude = data.Ap.Lat
+		by.Header.NavFixLongtitude = data.Ap.Lng
 	}
 	if data.Comp != nil {
-
+		by.Header.VesselHeading = data.Comp.Head
+		by.Header.Pitch = data.Comp.Pitch
+		by.Header.Roll = data.Comp.Roll
 	}
 	if data.Ctd45 != nil {
-
+		by.Header.Temperature = data.Ctd45.Temp
+		by.Header.SoundVelocity = data.Ctd45.Vel
 	}
 	if data.Ctd60 != nil {
-
+		by.Header.Temperature = data.Ctd60.Temp
+		by.Header.SoundVelocity = data.Ctd60.Vel
 	}
 	if data.Pre != nil {
-
+		by.Header.Pressure = data.Pre.P
 	}
 	//by should be merged already
 
 	return by.Pack()
 }
+
+//MergeOICSonar merge sensor data to sonar structure
 func MergeOICSonar(sonar *oic.Sonar, data *sensor.MixData) []byte {
 	if data.Ap != nil {
-
+		sonar.Header.NavFixLatitude = data.Ap.Lat
+		sonar.Header.NavFixLongtitude = data.Ap.Lng
 	}
 	if data.Comp != nil {
-
+		sonar.Header.VesselHeading = data.Comp.Head
+		sonar.Header.Pitch = data.Comp.Pitch
+		sonar.Header.Roll = data.Comp.Roll
 	}
 	if data.Ctd45 != nil {
-
+		sonar.Header.Temperature = data.Ctd45.Temp
+		sonar.Header.SoundVelocity = data.Ctd45.Vel
 	}
 	if data.Ctd60 != nil {
-
+		sonar.Header.Temperature = data.Ctd60.Temp
+		sonar.Header.SoundVelocity = data.Ctd60.Vel
 	}
 	if data.Pre != nil {
-
+		sonar.Header.Pressure = data.Pre.P
 	}
 	//by should be merged already
 
 	return sonar.Pack()
 }
-func RegenThread(cfg *util.Cfg) {
 
+//RegenThread thread of merge data to OIC structure
+func RegenThread(cfg *util.Cfg) {
+	byfound := false
+	ssfound := false
+	subfound := false
+	var by *sensor.Node
+	var ss *sensor.Node
+	var sub *sensor.Node
+	for {
+		if byfound == false {
+			if queueBy, ok := SQMap[sensor.BathyId]; ok {
+				maplock.Lock()
+				if by := queueBy.Pop(); by != nil {
+					//bathy found!
+					byfound = true
+				}
+				maplock.Unlock()
+			}
+		}
+		if ssfound == false {
+			if queueSs, ok := SQMap[sensor.SSId]; ok {
+				maplock.Lock()
+				if ss := queueSs.Pop(); ss != nil {
+					//ss found!
+					ssfound = true
+
+				}
+				maplock.Unlock()
+			}
+		}
+		if subfound == false {
+			if queueSub, ok := SQMap[sensor.SubbottomId]; ok {
+				maplock.Lock()
+				if sub := queueSub.Pop(); ss != nil {
+					//sub found!
+					subfound = true
+
+				}
+				maplock.Unlock()
+			}
+		}
+		time.Sleep(time.Second * 1)
+		if ssfound && subfound && byfound {
+			if (ss.Time == by.Time) && (by.Time == sub.Time) {
+				sensordata := &sensor.MixData{}
+				maplock.Lock()
+				sensordata.Ap = SQMap[sensor.ADID].FetchData(by.Time)
+				sensordata.Comp = SQMap[sensor.CompassHeader].FetchData(by.Time)
+				sensordata.Ctd45 = SQMap[sensor.CTD4500Header].FetchData(by.Time)
+				sensordata.Ctd60 = SQMap[sensor.CTD6000Header].FetchData(by.Time)
+				sensordata.Pre = SQMap[sensor.PresureHeader].FetchData(by.Time)
+				maplock.Unlock()
+				MergeOICBathy(by, sensordata)
+				MergeOICSonar(sonar, sensordata)
+			}
+		}
+
+	}
 }
 
-//relay thread: wait for incoming data and relay to dest addr
+//RelayThread wait for incoming data and relay to dest addr
 func RelayThread(cfg *util.Cfg) {
 	server := cfg.RelayIP + ":" + strconv.FormatInt(int64(cfg.RelaySenrPort), 10)
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
@@ -358,8 +435,10 @@ func RelayThread(cfg *util.Cfg) {
 	}
 
 }
+
+//SetupServer local net listener
 func SetupServer(cfg *util.Cfg) {
-	listenaddr := "129.196.34.13:" + strconv.FormatInt(int64(cfg.SensorPort), 10)
+	listenaddr := "127.0.0.1:" + strconv.FormatInt(int64(cfg.SensorPort), 10)
 	netListen, err := net.Listen("tcp", listenaddr)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("ServerThread - Fatal error: %s", err.Error()))
