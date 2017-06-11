@@ -22,7 +22,7 @@ var logger = new(util.Logger)
 //SQMap external data queue map
 var SQMap map[uint16]*sensor.Queue
 var maplock = new(sync.Mutex)
-var trace = &tracefile{}
+var trace = &util.Tracefile{}
 
 func main() {
 	logger.New("regener.log")
@@ -112,7 +112,7 @@ func dispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 	duss := &sensor.DuSs{}
 	var hasBy, hasSs bool
 	for _, v := range bs.Payload {
-		if value, ok := v.(*sensor.Bathy); ok {
+		if value, ok := v.(*sensor.SingelBathy); ok {
 			bathy := value
 			if bathy.ID == uint32(sensor.PortByID) {
 				duby.PortBathy = value
@@ -295,20 +295,20 @@ func MergeOICBathy(by *oic.Bathy, data *sensor.MixData) []byte {
 		by.Header.NavFixLongtitude = data.Ap.Lng
 	}
 	if data.Comp != nil {
-		by.Header.VesselHeading = data.Comp.Head
-		by.Header.Pitch = data.Comp.Pitch
-		by.Header.Roll = data.Comp.Roll
+		by.Header.VesselHeading = float32(data.Comp.Head)
+		by.Header.Pitch = float32(data.Comp.Pitch)
+		by.Header.Roll = float32(data.Comp.Roll)
 	}
 	if data.Ctd45 != nil {
-		by.Header.Temperature = data.Ctd45.Temp
-		by.Header.SoundVelocity = data.Ctd45.Vel
+		by.Header.Temperature = float32(data.Ctd45.Temp)
+		by.Header.SoundVelocity = float32(data.Ctd45.Vel)
 	}
 	if data.Ctd60 != nil {
-		by.Header.Temperature = data.Ctd60.Temp
-		by.Header.SoundVelocity = data.Ctd60.Vel
+		by.Header.Temperature = float32(data.Ctd60.Temp)
+		by.Header.SoundVelocity = float32(data.Ctd60.Vel)
 	}
 	if data.Pre != nil {
-		by.Header.Pressure = data.Pre.P
+		by.Header.Pressure = float32(data.Pre.P)
 	}
 	//by should be merged already
 
@@ -322,20 +322,20 @@ func MergeOICSonar(sonar *oic.Sonar, data *sensor.MixData) []byte {
 		sonar.Header.NavFixLongtitude = data.Ap.Lng
 	}
 	if data.Comp != nil {
-		sonar.Header.VesselHeading = data.Comp.Head
-		sonar.Header.Pitch = data.Comp.Pitch
-		sonar.Header.Roll = data.Comp.Roll
+		sonar.Header.VesselHeading = float32(data.Comp.Head)
+		sonar.Header.Pitch = float32(data.Comp.Pitch)
+		sonar.Header.Roll = float32(data.Comp.Roll)
 	}
 	if data.Ctd45 != nil {
-		sonar.Header.Temperature = data.Ctd45.Temp
-		sonar.Header.SoundVelocity = data.Ctd45.Vel
+		sonar.Header.Temperature = float32(data.Ctd45.Temp)
+		sonar.Header.SoundVelocity = float32(data.Ctd45.Vel)
 	}
 	if data.Ctd60 != nil {
-		sonar.Header.Temperature = data.Ctd60.Temp
-		sonar.Header.SoundVelocity = data.Ctd60.Vel
+		sonar.Header.Temperature = float32(data.Ctd60.Temp)
+		sonar.Header.SoundVelocity = float32(data.Ctd60.Vel)
 	}
 	if data.Pre != nil {
-		sonar.Header.Pressure = data.Pre.P
+		sonar.Header.Pressure = float32(data.Pre.P)
 	}
 	//by should be merged already
 
@@ -375,7 +375,7 @@ func RegenThread(cfg *util.Cfg) {
 		if subfound == false {
 			if queueSub, ok := SQMap[sensor.SubbottomId]; ok {
 				maplock.Lock()
-				if sub := queueSub.Pop(); ss != nil {
+				if sub := queueSub.Pop(); sub != nil {
 					//sub found!
 					subfound = true
 
@@ -388,18 +388,66 @@ func RegenThread(cfg *util.Cfg) {
 			if (ss.Time == by.Time) && (by.Time == sub.Time) {
 				sensordata := &sensor.MixData{}
 				maplock.Lock()
-				sensordata.Ap = SQMap[sensor.ADID].FetchData(by.Time)
-				sensordata.Comp = SQMap[sensor.CompassHeader].FetchData(by.Time)
-				sensordata.Ctd45 = SQMap[sensor.CTD4500Header].FetchData(by.Time)
-				sensordata.Ctd60 = SQMap[sensor.CTD6000Header].FetchData(by.Time)
-				sensordata.Pre = SQMap[sensor.PresureHeader].FetchData(by.Time)
+				sensordata.Ap = SQMap[sensor.ADID].FetchData(by.Time).(*sensor.AP)
+				sensordata.Comp = SQMap[sensor.CompassHeader].FetchData(by.Time).(*sensor.Compass)
+				sensordata.Ctd45 = SQMap[sensor.CTD4500Header].FetchData(by.Time).(*sensor.Ctd4500)
+				sensordata.Ctd60 = SQMap[sensor.CTD6000Header].FetchData(by.Time).(*sensor.Ctd6000)
+				sensordata.Pre = SQMap[sensor.PresureHeader].FetchData(by.Time).(*sensor.Presure)
 				maplock.Unlock()
-				MergeOICBathy(by, sensordata)
-				MergeOICSonar(sonar, sensordata)
+				if trace.File == nil {
+					err := trace.New("BSSS", uint32(cfg.MaxSize)*1024*1024)
+					if err != nil {
+						logger.Fatal("Create bsss data file failed!")
+					}
+				}
+				duby := by.Data.(*sensor.DuBathy)
+				duss := ss.Data.(*sensor.DuSs)
+				subbottom := sub.Data.(*sensor.Subbottom)
+
+				bathy := formatBathy(duby)
+				sonar := formatSonar(duss, subbottom)
+
+				trace.Write(MergeOICBathy(bathy, sensordata), false)
+				trace.Write(MergeOICSonar(sonar, sensordata), true)
 			}
 		}
 
 	}
+}
+func formatBathy(duby *sensor.DuBathy) *oic.Bathy {
+	bathy := &oic.Bathy{}
+	bathy.Init()
+	length := len(duby.PortBathy.DataAngle)
+	for i := 0; i < length; i++ {
+		bathy.PortAngle[i] = (float32)(duby.PortBathy.DataAngle[i])
+		bathy.PortR[i] = (float32)(duby.PortBathy.DataDelay[i]) //should be same length
+
+	}
+	length = len(duby.StarboardBathy.DataAngle)
+	for i := 0; i < length; i++ {
+		bathy.StarboardAngle[i] = (float32)(duby.StarboardBathy.DataAngle[i])
+		bathy.StarboardR[i] = (float32)(duby.StarboardBathy.DataDelay[i]) //should be same length
+	}
+	return bathy
+}
+func formatSonar(duss *sensor.DuSs, sub *sensor.Subbottom) *oic.Sonar {
+
+	sonar := &oic.Sonar{}
+	sonar.Init()
+	length := len(duss.PortSs.Data)
+
+	for i := 0; i < length; i++ {
+		sonar.PortSidescan[i] = (int16)(duss.PortSs.Data[i])
+	}
+	length = len(duss.StarboardSs.Data)
+	for i := 0; i < length; i++ {
+		sonar.StarboardSidescan[i] = (int16)(duss.StarboardSs.Data[i])
+	}
+	length = len(sub.Sbdata)
+	for i := 0; i < length; i++ {
+		sonar.SubBottom[i] = (int16)(sub.Sbdata[i])
+	}
+	return sonar
 }
 
 //RelayThread wait for incoming data and relay to dest addr

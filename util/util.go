@@ -397,8 +397,8 @@ func ByteToFloat64BE(bytes []byte) float64 {
 }
 
 //save file
-type tracefile struct {
-	writer    *bufio.Writer
+type Tracefile struct {
+	Writer    *bufio.Writer
 	File      *os.File
 	Count     uint32
 	FileName  string
@@ -406,8 +406,8 @@ type tracefile struct {
 	FileIndex uint16
 }
 
-func (tf *tracefile) New(pre string, maxlength uint32) error {
-	if tf.writer != nil {
+func (tf *Tracefile) New(pre string, maxlength uint32) error {
+	if tf.Writer != nil {
 		return errors.New("Already create a trace file instance")
 	}
 	t := time.Now().Format("060102150405")
@@ -422,14 +422,14 @@ func (tf *tracefile) New(pre string, maxlength uint32) error {
 	}
 	tf.FileIndex = 1
 	tf.Count = 0
-	tf.writer = bufio.NewWriter(tf.File)
+	tf.Writer = bufio.NewWriter(tf.File)
 	return nil
 }
-func (tf *tracefile) Write(bytes []byte, reopen bool) error {
-	if tf.writer == nil {
+func (tf *Tracefile) Write(bytes []byte, reopen bool) error {
+	if tf.Writer == nil {
 		return errors.New("no valid trace file")
 	}
-	n, err := tf.writer.Write(bytes)
+	n, err := tf.Writer.Write(bytes)
 
 	if err != nil {
 		if tf.File != nil {
@@ -437,7 +437,7 @@ func (tf *tracefile) Write(bytes []byte, reopen bool) error {
 		}
 		return err
 	}
-	err = tf.writer.Flush()
+	err = tf.Writer.Flush()
 	if err != nil {
 		if tf.File != nil {
 			tf.File.Close()
@@ -459,13 +459,13 @@ func (tf *tracefile) Write(bytes []byte, reopen bool) error {
 		}
 
 		tf.Count = 0
-		tf.writer = bufio.NewWriter(tf.File)
+		tf.Writer = bufio.NewWriter(tf.File)
 	}
 	return nil
 }
-func (tf *tracefile) Close() {
-	if tf.writer != nil {
-		tf.writer.Flush()
+func (tf *Tracefile) Close() {
+	if tf.Writer != nil {
+		tf.Writer.Flush()
 	}
 	if tf.File != nil {
 		tf.File.Close()

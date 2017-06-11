@@ -61,5 +61,8 @@ func (bathy *Bathy) Pack() []byte {
 	for i := 0; i < len(bathy.StarboardR); i++ {
 		buf = append(buf, util.Float32ToByteBE(bathy.StarboardR[i])...)
 	}
+	for i := 0; i < 56; i++ {
+		buf = append(buf, util.IntToBytesBE(16, int64(bathy.Unknow[i]))...)
+	}
 	return buf
 }

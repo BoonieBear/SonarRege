@@ -82,8 +82,8 @@ type Ss struct {
 	Data   []float64 // count = Length/4
 }
 
-//bathy scan
-type Bathy struct {
+//single bathy scan
+type SingelBathy struct {
 	ID        uint32
 	Length    uint32
 	Para      uint32    //reserved
@@ -103,8 +103,8 @@ func (duss *DuSs) Parse(recvbuf []byte) error {
 
 //Bathy struct for star/port bathy
 type DuBathy struct {
-	PortBathy      *Bathy
-	StarboardBathy *Bathy
+	PortBathy      *SingelBathy
+	StarboardBathy *SingelBathy
 }
 
 func (duby *DuBathy) Parse(recvbuf []byte) error {
@@ -120,7 +120,7 @@ func (bsss *Bsss) Parse(recvbuf []byte) error {
 		switch uint16(util.BytesToUIntBE(16, recvbuf[index:])) {
 		case PortByID:
 		case StarboardByID:
-			by := &Bathy{}
+			by := &SingelBathy{}
 			by.Parse(recvbuf[index:])
 			bsss.Payload = append(bsss.Payload, by)
 			index = index + 12 + int(by.Length)
@@ -142,7 +142,7 @@ func (sub *Subbottom) Parse(recvbuf []byte) error {
 	sub.Header.Parse(recvbuf)
 	sub.Wpara.Parse(recvbuf[8:])
 	sub.Dpara.Parse(recvbuf[64:])
-	for i, _ := range sub.Sbdata {
+	for i := range sub.Sbdata {
 		sub.Sbdata[i] = uint16(util.BytesToUIntBE(16, recvbuf[104+2*i:]))
 	}
 	return nil
@@ -201,7 +201,7 @@ func (s *Ss) Parse(recvbuf []byte) error {
 	}
 	return nil
 }
-func (b *Bathy) Parse(recvbuf []byte) error {
+func (b *SingelBathy) Parse(recvbuf []byte) error {
 	b.ID = uint32(util.BytesToUIntBE(32, recvbuf))
 	b.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
 	b.Para = uint32(util.BytesToUIntBE(32, recvbuf[8:]))

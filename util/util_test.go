@@ -16,7 +16,7 @@ func TestLoadCfg(t *testing.T) {
 }
 
 func TestNewTraceFile(t *testing.T) {
-	tfile := &tracefile{}
+	tfile := &Tracefile{}
 	err := tfile.New("test", 1024)
 	if err != nil {
 		t.Error(err.Error())
@@ -25,7 +25,7 @@ func TestNewTraceFile(t *testing.T) {
 }
 
 func TestWriteTraceFile(t *testing.T) {
-	tfile := &tracefile{}
+	tfile := &Tracefile{}
 	err := tfile.New("testwrite", 1024)
 	if err != nil {
 		t.Error(err.Error())
