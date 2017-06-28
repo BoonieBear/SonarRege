@@ -15,6 +15,9 @@ import (
 //RelayEnable relay socket enable
 var RelayEnable = false
 
+//RegenbEnable relay socket enable
+var RegenbEnable = false
+
 //RelayChan chan between socket conn and relay thread
 var RelayChan = make(chan []byte, 100)
 var logger = new(util.Logger)
@@ -50,6 +53,23 @@ func main() {
 	go RegenThread(config)
 	logger.Println("Start Relay Thread.....")
 	go RelayThread(config)
+
+	// Capture ctrl-c or other interruptions then clean up the global lock.
+	ch := make(chan os.Signal)
+	signal.Notify(ch, os.Interrupt, os.Kill)
+	go func(cc <-chan os.Signal) {
+		s := <-cc
+		RegenbEnable = false
+		RelayEnable = false
+		// Exiting with the expected exit codes when we can.
+		if s == os.Interrupt {
+			os.Exit(130)
+		} else if s == os.Kill {
+			os.Exit(137)
+		} else {
+			os.Exit(1)
+		}
+	}(ch)
 	logger.Println("Start Server Thread......")
 	SetupServer(config)
 }
@@ -68,7 +88,7 @@ func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 					break
 				} else {
 					data := recvbuf[:length]
-					recvbuf = append(recvbuf, recvbuf[length:]...)
+					recvbuf = append(recvbuf[:0], recvbuf[length:]...)
 					return dispatchBsss(data, queuelock)
 				}
 			}
@@ -81,7 +101,7 @@ func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 					break
 				} else {
 					data := recvbuf[:length]
-					recvbuf = append(recvbuf, recvbuf[length:]...)
+					recvbuf = append(recvbuf[:0], recvbuf[length:]...)
 					return dispatchSub(data, queuelock)
 				}
 			}
@@ -94,13 +114,13 @@ func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 					break
 				} else {
 					data := recvbuf[:length]
-					recvbuf = append(recvbuf, recvbuf[length:]...)
+					recvbuf = append(recvbuf[:0], recvbuf[length:]...)
 					return dispatchSensor(data, queuelock)
 				}
 			}
 		}
 		//shift 2 bytes
-		recvbuf = append(recvbuf, recvbuf[2:]...)
+		recvbuf = append(recvbuf[:0], recvbuf[2:]...)
 	}
 	return nil
 }
@@ -347,10 +367,14 @@ func RegenThread(cfg *util.Cfg) {
 	byfound := false
 	ssfound := false
 	subfound := false
+	RegenbEnable = true
 	var by *sensor.Node
 	var ss *sensor.Node
 	var sub *sensor.Node
 	for {
+		if RegenbEnable == false {
+			logger.Println("RegenThread - RegenbEnable set to false,exit thread")
+		}
 		if byfound == false {
 			if queueBy, ok := SQMap[sensor.BathyId]; ok {
 				maplock.Lock()
@@ -471,6 +495,10 @@ func RelayThread(cfg *util.Cfg) {
 		logger.Println("RelayThread - Connect " + server + " successfull")
 		RelayEnable = true
 		for {
+			if RelayEnable == false {
+				logger.Println("RelayThread - RelayEnable set to false,exit thread")
+				break
+			}
 			select {
 			case data := <-RelayChan:
 				_, err := conn.Write(data)
