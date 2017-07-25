@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"os/signal"
 	"regener/oic"
 	"regener/sensor"
 	"regener/util"
 	"strconv"
 	"sync"
 	"time"
+)
+
+const (
+	DIALTIMEOUT = 5
 )
 
 //RelayEnable relay socket enable
@@ -477,13 +483,13 @@ func formatSonar(duss *sensor.DuSs, sub *sensor.Subbottom) *oic.Sonar {
 //RelayThread wait for incoming data and relay to dest addr
 func RelayThread(cfg *util.Cfg) {
 	server := cfg.RelayIP + ":" + strconv.FormatInt(int64(cfg.RelaySenrPort), 10)
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
+	_, err := net.ResolveTCPAddr("tcp4", server)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("RelayThread - Fatal error: %s", err.Error()))
 	}
 	for {
 		RelayEnable = false
-		conn, err := net.DialTCP("tcp", nil, tcpAddr)
+		conn, err := net.DialTimeout("tcp", server, time.Second*DIALTIMEOUT)
 		if err != nil {
 			logger.Println(fmt.Sprintf("RelayThread - DialTCP error: %s Thread will try connect every 10 seconds", err.Error()))
 			select {
