@@ -52,6 +52,10 @@ func (ap *AP) Parse(recvbuf []byte) error {
 	return nil
 }
 
+func (ap *AP) Dump() {
+
+}
+
 func (p *Presure) Parse(recvbuf []byte) error {
 	if util.BytesToUIntBE(16, recvbuf) != uint64(PresureHeader) {
 		return errors.New("Presure Header missed!")
@@ -71,6 +75,10 @@ func (p *Presure) Parse(recvbuf []byte) error {
 	p.P, _ = strconv.ParseFloat(data[1], 64)
 	p.P = p.P - 10
 	return nil
+}
+
+func (p *Presure) Dump() {
+
 }
 
 func (comp *Compass) Parse(recvbuf []byte) error {
@@ -101,6 +109,10 @@ func (comp *Compass) Parse(recvbuf []byte) error {
 	return nil
 }
 
+func (comp *Compass) Dump() {
+
+}
+
 func (ctd *Ctd4500) Parse(recvbuf []byte) error {
 	if util.BytesToUIntBE(16, recvbuf) != uint64(CTD4500Header) {
 		return errors.New("Ctd4500 Header missed!")
@@ -122,6 +134,11 @@ func (ctd *Ctd4500) Parse(recvbuf []byte) error {
 
 	return nil
 }
+
+func (ctd *Ctd4500) Dump() {
+
+}
+
 func (ctd *Ctd6000) Parse(recvbuf []byte) error {
 	if util.BytesToUIntBE(16, recvbuf) != uint64(CTD6000Header) {
 		return errors.New("Ctd6000 Header missed!")
@@ -164,6 +181,10 @@ func (ctd *Ctd6000) Parse(recvbuf []byte) error {
 	//now calc the velocity base on the upper data
 	ctd.Vel = calcVelocity(ctd.cond, ctd.Temp, ctd.Pres)
 	return nil
+}
+
+func (ctd *Ctd6000) Dump() {
+
 }
 
 func calcVelocity(cond float64, temp float64, pres float64) float64 {

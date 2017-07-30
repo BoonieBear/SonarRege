@@ -39,6 +39,7 @@ var IDs = [...]uint16{
 
 type ISensor interface {
 	Parse(recvbuf []byte) error
+	Dump()
 }
 
 type AP struct {

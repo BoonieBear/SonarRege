@@ -101,10 +101,18 @@ func (duss *DuSs) Parse(recvbuf []byte) error {
 	return nil
 }
 
+func (duss *DuSs) Dump() {
+
+}
+
 //Bathy struct for star/port bathy
 type DuBathy struct {
 	PortBathy      *SingelBathy
 	StarboardBathy *SingelBathy
+}
+
+func (duby *DuBathy) Dump() {
+
 }
 
 func (duby *DuBathy) Parse(recvbuf []byte) error {
@@ -138,6 +146,11 @@ func (bsss *Bsss) Parse(recvbuf []byte) error {
 	return nil
 }
 
+//Display all the item in Bsss
+func (bsss *Bsss) Dump() {
+
+}
+
 func (sub *Subbottom) Parse(recvbuf []byte) error {
 	sub.Header.Parse(recvbuf)
 	sub.Wpara.Parse(recvbuf[8:])
@@ -148,11 +161,20 @@ func (sub *Subbottom) Parse(recvbuf []byte) error {
 	return nil
 }
 
+func (sub *Subbottom) Dump() {
+
+}
+
 func (header *Bsssheadr) Parse(recvbuf []byte) {
 	header.ID = uint16(util.BytesToUIntBE(16, recvbuf))
 	header.Version = uint16(util.BytesToUIntBE(16, recvbuf[2:]))
 	header.PackageLen = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
 }
+
+func (header *Bsssheadr) Dump() {
+
+}
+
 func (w *Workpara) Parse(recvbuf []byte) {
 	w.Serial = uint16(util.BytesToUIntBE(16, recvbuf))
 	w.PulseLen = uint16(util.BytesToUIntBE(16, recvbuf[2:]))
@@ -176,6 +198,11 @@ func (w *Workpara) Parse(recvbuf []byte) {
 	w.FixedTVG = uint32(util.BytesToUIntBE(32, recvbuf[48:]))
 	w.Reserved = uint32(util.BytesToUIntBE(32, recvbuf[52:]))
 }
+
+func (w *Workpara) Dump() {
+
+}
+
 func (d *Datapara) Parse(recvbuf []byte) {
 	d.DataID = uint16(util.BytesToUIntBE(16, recvbuf))
 	d.IsNewEmit = uint16(util.BytesToUIntBE(16, recvbuf[2:]))
@@ -191,6 +218,11 @@ func (d *Datapara) Parse(recvbuf []byte) {
 	d.Reserve1[1] = uint16(util.BytesToUIntBE(16, recvbuf[36:]))
 	d.Reserve1[2] = uint16(util.BytesToUIntBE(16, recvbuf[38:]))
 }
+
+func (d *Datapara) Dump() {
+
+}
+
 func (s *Ss) Parse(recvbuf []byte) error {
 	s.ID = uint32(util.BytesToUIntBE(32, recvbuf))
 	s.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
@@ -201,6 +233,11 @@ func (s *Ss) Parse(recvbuf []byte) error {
 	}
 	return nil
 }
+
+func (s *Ss) Dump() {
+
+}
+
 func (b *SingelBathy) Parse(recvbuf []byte) error {
 	b.ID = uint32(util.BytesToUIntBE(32, recvbuf))
 	b.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
@@ -214,4 +251,8 @@ func (b *SingelBathy) Parse(recvbuf []byte) error {
 		b.DataDelay[i] = float64(util.ByteToFloat32BE(recvbuf[12+i*4:]))
 	}
 	return nil
+}
+
+func (b *SingelBathy) Dump() {
+
 }
