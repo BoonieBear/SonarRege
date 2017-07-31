@@ -1,6 +1,7 @@
 package sensor
 
 import (
+	"fmt"
 	"regener/util"
 )
 
@@ -148,6 +149,13 @@ func (bsss *Bsss) Parse(recvbuf []byte) error {
 
 //Display all the item in Bsss
 func (bsss *Bsss) Dump() {
+	fmt.Println("=== display BSSS data ===")
+	bsss.Header.Dump()
+	bsss.Wpara.Dump()
+	bsss.Dpara.Dump()
+	for _, v := range bsss.Payload {
+		v.Dump()
+	}
 
 }
 
@@ -162,7 +170,14 @@ func (sub *Subbottom) Parse(recvbuf []byte) error {
 }
 
 func (sub *Subbottom) Dump() {
-
+	fmt.Println("=== display sub bottom data ===")
+	sub.Header.Dump()
+	sub.Wpara.Dump()
+	sub.Dpara.Dump()
+	fmt.Println("print top 10 sub bottom data: ")
+	for i := 0; i < 10; i++ {
+		fmt.Printf("%d %d |", i, sub.Sbdata[i])
+	}
 }
 
 func (header *Bsssheadr) Parse(recvbuf []byte) {
@@ -172,7 +187,10 @@ func (header *Bsssheadr) Parse(recvbuf []byte) {
 }
 
 func (header *Bsssheadr) Dump() {
-
+	fmt.Println("--- display bsss header data ---")
+	fmt.Printf("- headr id = %d", header.ID)
+	fmt.Printf("- headr version = %d", header.Version)
+	fmt.Printf("- headr package len = %d", header.PackageLen)
 }
 
 func (w *Workpara) Parse(recvbuf []byte) {
@@ -200,6 +218,27 @@ func (w *Workpara) Parse(recvbuf []byte) {
 }
 
 func (w *Workpara) Dump() {
+	fmt.Println("--- display work para data ---")
+	fmt.Printf("- Serial = %d", w.Serial)
+	fmt.Printf("- PulseLen = %d", w.PulseLen)
+	fmt.Printf("- PortStartFq = %d", w.PortStartFq)
+	fmt.Printf("- StarboardFq = %d", w.StarboardFq)
+	fmt.Printf("- PortChirpFq = %d", w.PortChirpFq)
+	fmt.Printf("- StarboardChirpFq = %d", w.StarboardChirpFq)
+	fmt.Printf("- RecvLatecy = %d", w.RecvLatecy)
+	fmt.Printf("- Sampling = %d", w.Sampling)
+	fmt.Printf("- EmitInterval = %d", w.EmitInterval)
+	fmt.Printf("- RelativeGain = %d", w.RelativeGain)
+	fmt.Printf("- StatusFlag = %d", w.StatusFlag)
+	fmt.Printf("- TVGLatecy = %d", w.TVGLatecy)
+	fmt.Printf("- TVGRefRate = %d", w.TVGRefRate)
+	fmt.Printf("- TVGCtrl = %d", w.TVGCtrl)
+	fmt.Printf("- TVGFactor = %d", w.TVGFactor)
+	fmt.Printf("- TVGAntenu = %d", w.TVGAntenu)
+	fmt.Printf("- TVGGain = %d", w.TVGGain)
+	fmt.Printf("- RetFlag = %d", w.RetFlag)
+	fmt.Printf("- CMDFlag = %d", w.CMDFlag)
+	fmt.Printf("- FixedTVG = %d", w.FixedTVG)
 
 }
 
@@ -220,7 +259,17 @@ func (d *Datapara) Parse(recvbuf []byte) {
 }
 
 func (d *Datapara) Dump() {
-
+	fmt.Println("--- display data para data ---")
+	fmt.Printf("- DataID = %d", d.DataID)
+	fmt.Printf("- IsNewEmit = %d", d.IsNewEmit)
+	fmt.Printf("- EmitCount = %d", d.EmitCount)
+	fmt.Printf("- Reserved = %d", d.Reserved)
+	fmt.Printf("- DataParaID = %d", d.DataParaID)
+	fmt.Printf("- EmitShiftPoint = %d", d.EmitShiftPoint)
+	fmt.Printf("- EmitTime1st = %d", d.EmitTime1st)
+	fmt.Printf("- EmitTime2nd = %d", d.EmitTime2nd)
+	fmt.Printf("- Velocity = %d", d.Velocity)
+	fmt.Printf("- DataCount = %d", d.DataCount)
 }
 
 func (s *Ss) Parse(recvbuf []byte) error {
@@ -235,7 +284,14 @@ func (s *Ss) Parse(recvbuf []byte) error {
 }
 
 func (s *Ss) Dump() {
-
+	fmt.Println("=== display side scan data ===")
+	fmt.Printf("- ID = %d", s.ID)
+	fmt.Printf("- Length = %d", s.Length)
+	fmt.Printf("- Para = %d", s.Para)
+	fmt.Println("print top 10 side scan data: ")
+	for i := 0; i < 10; i++ {
+		fmt.Printf("%d %f |", i, s.Data[i])
+	}
 }
 
 func (b *SingelBathy) Parse(recvbuf []byte) error {
@@ -254,5 +310,16 @@ func (b *SingelBathy) Parse(recvbuf []byte) error {
 }
 
 func (b *SingelBathy) Dump() {
-
+	fmt.Println("=== display single bathy data ===")
+	fmt.Printf("- ID = %d", b.ID)
+	fmt.Printf("- Length = %d", b.Length)
+	fmt.Printf("- Para = %d", b.Para)
+	fmt.Println("print top 10 angle data: ")
+	for i := 0; i < 10; i++ {
+		fmt.Printf("%d %f |", i, b.DataAngle[i])
+	}
+	fmt.Println("print top 10 delay data: ")
+	for i := 0; i < 10; i++ {
+		fmt.Printf("%d %f |", i, b.DataDelay[i])
+	}
 }
