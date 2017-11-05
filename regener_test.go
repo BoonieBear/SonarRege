@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"regener/sensor"
+	"regener/util"
 	"sync"
 	"testing"
 )
 
-var SQMap map[uint16]*sensor.Queue
+//var SQMap map[uint16]*sensor.Queue
 var queuelock *sync.Mutex
 var file string
 
@@ -24,9 +26,9 @@ func Init() {
 	}
 	queuelock = new(sync.Mutex)
 }
-func walkQueue(sensormap map[uint16]*sensor.Queue, id uint16) {
-	if queue, ok := SQMap[id]; ok {
-		ncount := queue.count
+func walkMap(sensormap map[uint16]*sensor.Queue) {
+	for id, queue := range sensormap {
+		ncount := queue.Count()
 		fmt.Printf("queue %d has %d items:\n", id, ncount)
 		for i := 0; i < ncount; i++ {
 			node := queue.Pop()
@@ -35,14 +37,24 @@ func walkQueue(sensormap map[uint16]*sensor.Queue, id uint16) {
 	}
 
 }
-func TestdispatchBsss(t *testing.T) {
+func TestDispatchBsss(t *testing.T) {
 
 }
-func TestdispatchSub(t *testing.T) {
+func TestDispatchSub(t *testing.T) {
 
 }
-func TestdispatchSensor(t *testing.T) {
+func TestDispatchSensor(t *testing.T) {
 	file = "./data/2015_02_28_15_29_19_0_传感器.dat"
-
-	dispatchSensor(recvbuf, queuelock)
+	recvbuf, err := ioutil.ReadFile(file)
+	if err != nil {
+		fmt.Println("read test file err:", err.Error())
+	}
+	if util.BytesToUIntBE(16, recvbuf[38:]) != uint64(sensor.APHeader) {
+		t.Fatal("wrong function")
+	}
+	// err = DispatchSensor(recvbuf, queuelock)
+	// if err != nil {
+	// 	fmt.Println("dispatch Sensor data  err:", err.Error())
+	// }
+	//walkMap(SQMap)
 }

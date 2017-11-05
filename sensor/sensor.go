@@ -199,6 +199,10 @@ func NewQueue(size int) *Queue {
 	}
 }
 
+func (q *Queue) Count() int {
+	return q.count
+}
+
 // Push a node to the queue. If count ==size, then pop the oldest one and push the new node
 func (q *Queue) Push(n *Node) {
 	if q.head == q.tail && q.count > 0 {

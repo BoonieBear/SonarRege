@@ -95,7 +95,7 @@ func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 				} else {
 					data := recvbuf[:length]
 					recvbuf = append(recvbuf[:0], recvbuf[length:]...)
-					return dispatchBsss(data, queuelock)
+					return DispatchBsss(data, queuelock)
 				}
 			}
 		}
@@ -108,7 +108,7 @@ func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 				} else {
 					data := recvbuf[:length]
 					recvbuf = append(recvbuf[:0], recvbuf[length:]...)
-					return dispatchSub(data, queuelock)
+					return DispatchSub(data, queuelock)
 				}
 			}
 		}
@@ -121,7 +121,7 @@ func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 				} else {
 					data := recvbuf[:length]
 					recvbuf = append(recvbuf[:0], recvbuf[length:]...)
-					return dispatchSensor(data, queuelock)
+					return DispatchSensor(data, queuelock)
 				}
 			}
 		}
@@ -131,7 +131,7 @@ func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 	return nil
 }
 
-func dispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
+func DispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 	bs := &sensor.Bsss{}
 	bs.Parse(recvbuf)
 	duby := &sensor.DuBathy{}
@@ -185,7 +185,7 @@ func dispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 
 	return nil
 }
-func dispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
+func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 	totallength := util.BytesToUIntBE(32, recvbuf[4:])
 	index := uint64(8)
 	if string(recvbuf[8:14]) == "$GPZDA" {
@@ -298,7 +298,7 @@ func dispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 	}
 	return nil
 }
-func dispatchSub(recvbuf []byte, queuelock *sync.Mutex) error {
+func DispatchSub(recvbuf []byte, queuelock *sync.Mutex) error {
 	sub := &sensor.Subbottom{}
 	sub.Parse(recvbuf)
 	node := &sensor.Node{
