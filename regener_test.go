@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"regener/sensor"
-	"regener/util"
 	"sync"
 	"testing"
 )
@@ -38,13 +37,23 @@ func walkMap(sensormap map[uint16]*sensor.Queue) {
 
 }
 func TestDispatchBsss(t *testing.T) {
+	file := "./data/bsss_sample.dat"
+	recvbuf, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Println("read bsss_sample file err:", err.Error())
+	}
 
+	err = DispatchBsss(recvbuf, queuelock)
+	if err != nil {
+		fmt.Println("dispatch Bsss data  err:", err.Error())
+	}
+	walkMap(SQMap)
 }
 func TestDispatchSub(t *testing.T) {
 
 }
 func TestDispatchSensor(t *testing.T) {
-	file = "./data/2015_02_28_15_29_19_0_传感器.dat"
+	file := "./data/2015_02_28_15_29_19_0_传感器.dat"
 	recvbuf, err := ioutil.ReadFile(file)
 	if err != nil {
 		fmt.Println("read test file err:", err.Error())

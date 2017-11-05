@@ -86,9 +86,9 @@ func Dispatcher(recvbuf []byte, queuelock *sync.Mutex) error {
 		if len(recvbuf) < 4 {
 			break
 		}
-		if uint16(util.BytesToUIntBE(16, recvbuf)) == sensor.BsssId {
-			if uint16(util.BytesToUIntBE(16, recvbuf[2:])) == sensor.BsssVersion {
-				length := util.BytesToUIntBE(32, recvbuf[4:])
+		if uint16(util.BytesToUIntLE(16, recvbuf)) == sensor.BsssId {
+			if uint16(util.BytesToUIntLE(16, recvbuf[2:])) == sensor.BsssVersion {
+				length := util.BytesToUIntLE(32, recvbuf[4:])
 				if len(recvbuf) < int(length) {
 					//no enough buffer
 					break
@@ -187,6 +187,7 @@ func DispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 }
 func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 	totallength := util.BytesToUIntBE(32, recvbuf[4:])
+	fmt.Printf("totallength = %d\n", totallength)
 	index := uint64(8)
 	if string(recvbuf[8:14]) == "$GPZDA" {
 		index += 38
