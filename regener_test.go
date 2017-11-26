@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"regener/sensor"
+	"regener/util"
 	"sync"
 	"testing"
 )
@@ -38,7 +39,7 @@ func walkMap(sensormap map[uint16]*sensor.Queue) {
 }
 func TestDispatchBsss(t *testing.T) {
 	file := "./data/bsss_sample.dat"
-	recvbuf, err := ioutil.ReadAll(file)
+	recvbuf, err := ioutil.ReadFile(file)
 	if err != nil {
 		fmt.Println("read bsss_sample file err:", err.Error())
 	}
