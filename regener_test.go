@@ -13,7 +13,7 @@ import (
 var queuelock *sync.Mutex
 var file string
 
-func Init() {
+func init() {
 	SQMap = map[uint16]*sensor.Queue{
 		sensor.SSId:          sensor.NewQueue(100),
 		sensor.BathyId:       sensor.NewQueue(100),
@@ -29,7 +29,7 @@ func Init() {
 func walkMap(sensormap map[uint16]*sensor.Queue) {
 	for id, queue := range sensormap {
 		ncount := queue.Count()
-		fmt.Printf("queue %d has %d items:\n", id, ncount)
+		fmt.Printf("queue 0x%x has %d items:\n", id, ncount)
 		for i := 0; i < ncount; i++ {
 			node := queue.Pop()
 			fmt.Println(node)

@@ -120,7 +120,6 @@ func (duby *DuBathy) Parse(recvbuf []byte) error {
 	return nil
 }
 func (bsss *Bsss) Parse(recvbuf []byte) error {
-	fmt.Println("=== enter BSSS parse ===")
 	bsss.Header.Parse(recvbuf)
 	bsss.Header.Dump()
 	bsss.Wpara.Parse(recvbuf[8:])
@@ -129,21 +128,21 @@ func (bsss *Bsss) Parse(recvbuf []byte) error {
 	bsss.Dpara.Dump()
 	index := 104 //shift index byte
 	for {
-		switch uint16(util.BytesToUIntBE(16, recvbuf[index:])) {
-		case PortByID:
-		case StarboardByID:
+		switch uint16(util.BytesToUIntLE(16, recvbuf[index:])) {
+		case PortByID, StarboardByID:
 			by := &SingelBathy{}
 			by.Parse(recvbuf[index:])
+			by.Dump()
 			bsss.Payload = append(bsss.Payload, by)
 			index = index + 12 + int(by.Length)
-		case PortSSID:
-		case StarboardSSID:
+		case PortSSID, StarboardSSID:
 			s := &Ss{}
 			s.Parse(recvbuf[index:])
+			s.Dump()
 			bsss.Payload = append(bsss.Payload, s)
 			index = index + 12 + int(s.Length)
 		}
-		if index+2 == int(bsss.Header.PackageLen) {
+		if index+4 == int(bsss.Header.PackageLen) {
 			break
 		}
 	}
@@ -179,7 +178,7 @@ func (sub *Subbottom) Dump() {
 	sub.Dpara.Dump()
 	fmt.Println("print top 10 sub bottom data: ")
 	for i := 0; i < 10; i++ {
-		fmt.Printf("%d %d |", i, sub.Sbdata[i])
+		fmt.Printf("%d %d |\n", i, sub.Sbdata[i])
 	}
 }
 
@@ -276,12 +275,12 @@ func (d *Datapara) Dump() {
 }
 
 func (s *Ss) Parse(recvbuf []byte) error {
-	s.ID = uint32(util.BytesToUIntBE(32, recvbuf))
-	s.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
-	s.Para = uint32(util.BytesToUIntBE(32, recvbuf[8:]))
+	s.ID = uint32(util.BytesToUIntLE(32, recvbuf))
+	s.Length = uint32(util.BytesToUIntLE(32, recvbuf[4:]))
+	s.Para = uint32(util.BytesToUIntLE(32, recvbuf[8:]))
 	s.Data = make([]float64, s.Length/4)
 	for i := 0; i < int(s.Length/4); i++ {
-		s.Data[i] = float64(util.ByteToFloat32BE(recvbuf[12+i*4:]))
+		s.Data[i] = float64(util.ByteToFloat32LE(recvbuf[12+i*4:]))
 	}
 	return nil
 }
@@ -293,22 +292,22 @@ func (s *Ss) Dump() {
 	fmt.Printf("- Para = %d\n", s.Para)
 	fmt.Println("print top 10 side scan data: ")
 	for i := 0; i < 10; i++ {
-		fmt.Printf("%d %f |", i, s.Data[i])
+		fmt.Printf("%d %f |\n", i, s.Data[i])
 	}
 	fmt.Println("= side scan data end =")
 }
 
 func (b *SingelBathy) Parse(recvbuf []byte) error {
-	b.ID = uint32(util.BytesToUIntBE(32, recvbuf))
-	b.Length = uint32(util.BytesToUIntBE(32, recvbuf[4:]))
-	b.Para = uint32(util.BytesToUIntBE(32, recvbuf[8:]))
+	b.ID = uint32(util.BytesToUIntLE(32, recvbuf))
+	b.Length = uint32(util.BytesToUIntLE(32, recvbuf[4:]))
+	b.Para = uint32(util.BytesToUIntLE(32, recvbuf[8:]))
 	b.DataAngle = make([]float64, b.Length/4/2)
 	for i := 0; i < int(b.Length/4/2); i++ {
-		b.DataAngle[i] = float64(util.ByteToFloat32BE(recvbuf[12+i*4:]))
+		b.DataAngle[i] = float64(util.ByteToFloat32LE(recvbuf[12+i*4:]))
 	}
 	b.DataDelay = make([]float64, b.Length/4/2)
 	for i := int(b.Length / 4 / 2); i < int(b.Length/4); i++ {
-		b.DataDelay[i] = float64(util.ByteToFloat32BE(recvbuf[12+i*4:]))
+		b.DataDelay[i] = float64(util.ByteToFloat32LE(recvbuf[12+i*4:]))
 	}
 	return nil
 }
@@ -320,7 +319,7 @@ func (b *SingelBathy) Dump() {
 	fmt.Printf("- Para = %d", b.Para)
 	fmt.Println("print top 10 angle data: ")
 	for i := 0; i < 10; i++ {
-		fmt.Printf("%d %f |", i, b.DataAngle[i])
+		fmt.Printf("%d %f |\n", i, b.DataAngle[i])
 	}
 	fmt.Println("print top 10 delay data: ")
 	for i := 0; i < 10; i++ {
