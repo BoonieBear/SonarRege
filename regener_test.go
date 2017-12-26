@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"regener/sensor"
 	"regener/util"
 	"sync"
@@ -37,7 +38,7 @@ func walkMap(sensormap map[uint16]*sensor.Queue) {
 	}
 
 }
-func TestDispatchBsss(t *testing.T) {
+func TestParseBsss(t *testing.T) {
 	file := "./data/bsss_sample.dat"
 	recvbuf, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -50,8 +51,25 @@ func TestDispatchBsss(t *testing.T) {
 	}
 	walkMap(SQMap)
 }
-func TestDispatchSub(t *testing.T) {
+func TestDispatch(t *testing.T) {
+	file := "./data/2017_05_03_05_53_27_55.dat"
+	f, _ := os.Open(file)
+	defer f.Close()
+	recvbuf := make([]byte, 1024)
+	for {
+		n, err := f.Read(recvbuf)
+		if err != nil {
+			fmt.Println("read 2017_05_03_05_53_27_55 file err:", err.Error())
+			break
+		}
+		err = Dispatcher(recvbuf[:n], queuelock)
+		if err != nil {
+			fmt.Println("dispatch Bsss data  err:", err.Error())
+			break
+		}
+	}
 
+	walkMap(SQMap)
 }
 func TestDispatchSensor(t *testing.T) {
 	file := "./data/2015_02_28_15_29_19_0_传感器.dat"

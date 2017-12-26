@@ -303,26 +303,26 @@ func (b *SingelBathy) Parse(recvbuf []byte) error {
 	b.Para = uint32(util.BytesToUIntLE(32, recvbuf[8:]))
 	b.DataAngle = make([]float64, b.Length/4/2)
 	for i := 0; i < int(b.Length/4/2); i++ {
-		b.DataAngle[i] = float64(util.ByteToFloat32LE(recvbuf[12+i*4:]))
+		b.DataAngle[i] = float64(util.ByteToFloat32LE(recvbuf[(12 + i*4):]))
 	}
 	b.DataDelay = make([]float64, b.Length/4/2)
 	for i := int(b.Length / 4 / 2); i < int(b.Length/4); i++ {
-		b.DataDelay[i] = float64(util.ByteToFloat32LE(recvbuf[12+i*4:]))
+		b.DataDelay[i-int(b.Length/4/2)] = float64(util.ByteToFloat32LE(recvbuf[(12 + i*4):]))
 	}
 	return nil
 }
 
 func (b *SingelBathy) Dump() {
 	fmt.Println("=== display single bathy data ===")
-	fmt.Printf("- ID = %d", b.ID)
-	fmt.Printf("- Length = %d", b.Length)
-	fmt.Printf("- Para = %d", b.Para)
+	fmt.Printf("- ID = %d\n", b.ID)
+	fmt.Printf("- Length = %d\n", b.Length)
+	fmt.Printf("- Para = %d\n", b.Para)
 	fmt.Println("print top 10 angle data: ")
 	for i := 0; i < 10; i++ {
 		fmt.Printf("%d %f |\n", i, b.DataAngle[i])
 	}
 	fmt.Println("print top 10 delay data: ")
 	for i := 0; i < 10; i++ {
-		fmt.Printf("%d %f |", i, b.DataDelay[i])
+		fmt.Printf("%d %f |\n", i, b.DataDelay[i])
 	}
 }

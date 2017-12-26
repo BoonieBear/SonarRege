@@ -42,6 +42,18 @@ type ISensor interface {
 	Dump()
 }
 
+type OASHeader struct {
+	Time time.Time
+}
+
+type DVLHeader struct {
+	Time time.Time
+}
+
+type PHINSHeader struct {
+	Time time.Time
+}
+
 type AP struct {
 	Time time.Time
 	Lat  float64
