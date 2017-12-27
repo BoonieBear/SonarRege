@@ -42,15 +42,31 @@ type ISensor interface {
 	Dump()
 }
 
-type OASHeader struct {
-	Time time.Time
+type OAS struct {
+	Time  time.Time
+	Range float64
 }
 
-type DVLHeader struct {
-	Time time.Time
+type DVL struct {
+	Time       time.Time
+	Boardspd   float64
+	Frontspd   float64
+	Vertspd    float64
+	Eastrange  float64
+	Northrange float64
+	Verrange   float64
+	Botrange   float64
+	Tt         float64
+	Head       float64
+	Pitch      float64
+	Roll       float64
+	Salt       float64
+	Temp       float64
+	Depth      float64
+	Velocity   float64
 }
 
-type PHINSHeader struct {
+type PHINS struct {
 	Time time.Time
 }
 
@@ -98,6 +114,9 @@ type MixData struct {
 	Ctd45 *Ctd4500
 	Ctd60 *Ctd6000
 	Pre   *Presure
+	Oas   *OAS
+	Dvl   *DVL
+	Phins *PHINS
 }
 
 //

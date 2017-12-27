@@ -21,6 +21,110 @@ func extractTime(timestr string) time.Time {
 
 	return time.Date(year, time.Month(month), day, hour, mins, sec, msec, time.UTC)
 }
+
+func (oas *OAS) Parse(recvbuf []byte) error {
+	if util.BytesToUIntBE(16, recvbuf) != uint64(OASHeader) {
+		return errors.New("OAS Header missed!")
+	}
+	len := util.BytesToUIntBE(16, recvbuf[2:])
+
+	payload := string(recvbuf[4 : 4+len])
+	timestr := payload[0:20]
+
+	oas.Time = extractTime(timestr)
+
+	data := strings.Split(payload[20:], ",")
+	if data[10] == "FF" {
+		oas.Range = 256
+	} else {
+		oas.Range, _ = strconv.ParseFloat(data[10], 64)
+	}
+
+	return nil
+}
+
+func (oas *OAS) Dump() {
+
+}
+
+func (dvl *DVL) Parse(recvbuf []byte) error {
+	if util.BytesToUIntBE(16, recvbuf) != uint64(DVLHeader) {
+		return errors.New("DVL Header missed!")
+	}
+	len := util.BytesToUIntBE(16, recvbuf[2:])
+
+	payload := string(recvbuf[4 : 4+len])
+	timestr := payload[0:20]
+
+	dvl.Time = extractTime(timestr)
+
+	data := strings.Split(payload[20:], ":")
+	strings.Replace(data, "+", "", -1)
+	for i := 1; i < len(data); i++ {
+		subdata := strings.Split(data[i], ",")
+		if subdata[0] == "SA" {
+			dvl.Pitch, _ = strconv.ParseFloat(subdata[1], 64)
+			dvl.Roll, _ = strconv.ParseFloat(subdata[2], 64)
+			dvl.Head, _ = strconv.ParseFloat(subdata[3], 64)
+
+		} else if subdata[0] == "TS" {
+			dvl.Salt, _ = strconv.ParseFloat(subdata[2], 64)
+			dvl.Temp, _ = strconv.ParseFloat(subdata[3], 64)
+			dvl.Depth, _ = strconv.ParseFloat(subdata[4], 64)
+			dvl.Velocity, _ = strconv.ParseFloat(subdata[5], 64)
+
+		} else if subdata[0] == "BD" {
+			dvl.Eastrange, _ = strconv.ParseFloat(subdata[1], 64)
+			dvl.Northrange, _ = strconv.ParseFloat(subdata[2], 64)
+			dvl.Verrange, _ = strconv.ParseFloat(subdata[3], 64)
+			dvl.Botrange, _ = strconv.ParseFloat(subdata[4], 64)
+			dvl.Tt, _ = strconv.ParseFloat(subdata[5], 64)
+
+		} else if subdata[0] == "BS" {
+			dvl.Boardspd, _ = strconv.ParseFloat(subdata[1], 64)
+			dvl.Frontspd, _ = strconv.ParseFloat(subdata[2], 64)
+			dvl.Vertspd, _ = strconv.ParseFloat(subdata[3], 64)
+		}
+	}
+	return nil
+}
+
+func (dvl *DVL) Dump() {
+
+}
+
+func (phins *PHINS) Parse(recvbuf []byte) error {
+	if util.BytesToUIntBE(16, recvbuf) != uint64(CompassHeader) {
+		return errors.New("Compass Header missed!")
+	}
+	length := util.BytesToUIntBE(16, recvbuf[2:])
+
+	payload := string(recvbuf[4 : 4+length])
+	timestr := payload[0:20]
+
+	phins.Time = extractTime(timestr)
+
+	data := strings.Split(payload[20:], ",")
+	if data[0] != "$HEHDT" {
+		return errors.New("$HEHDT missed!")
+	}
+
+	phins.Head, _ = strconv.ParseFloat(data[1], 64)
+	if len(data) > 4 {
+		if strings.Contains(data[2], "$PIXSE") == false {
+			return errors.New("$PIXSE missed!")
+		}
+
+		phins.Roll, _ = strconv.ParseFloat(data[4], 64)
+		phins.Pitch, _ = strconv.ParseFloat(strings.Split(data[5], "*")[0], 64)
+	}
+	return nil
+}
+
+func (phins *PHINS) Dump() {
+
+}
+
 func (ap *AP) Parse(recvbuf []byte) error {
 	if util.BytesToUIntBE(16, recvbuf) != uint64(APHeader) {
 		return errors.New("AP Header missed!")
