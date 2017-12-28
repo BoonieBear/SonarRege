@@ -2,7 +2,7 @@ package sensor
 
 import (
 	"errors"
-	//"log"
+	//	"fmt"
 	"math"
 	"regener/util"
 	"strconv"
@@ -51,40 +51,52 @@ func (dvl *DVL) Parse(recvbuf []byte) error {
 	if util.BytesToUIntBE(16, recvbuf) != uint64(DVLHeader) {
 		return errors.New("DVL Header missed!")
 	}
-	len := util.BytesToUIntBE(16, recvbuf[2:])
+	length := util.BytesToUIntBE(16, recvbuf[2:])
 
-	payload := string(recvbuf[4 : 4+len])
+	payload := string(recvbuf[4 : 4+length])
 	timestr := payload[0:20]
 
 	dvl.Time = extractTime(timestr)
-
 	data := strings.Split(payload[20:], ":")
-	strings.Replace(data, "+", "", -1)
+
 	for i := 1; i < len(data); i++ {
+
+		data[i] = strings.Replace(data[i], "+", "", -1)
 		subdata := strings.Split(data[i], ",")
+
 		if subdata[0] == "SA" {
-			dvl.Pitch, _ = strconv.ParseFloat(subdata[1], 64)
-			dvl.Roll, _ = strconv.ParseFloat(subdata[2], 64)
-			dvl.Head, _ = strconv.ParseFloat(subdata[3], 64)
+			dvl.Pitch, _ = strconv.ParseFloat(strings.TrimSpace(subdata[1]), 64)
+
+			dvl.Roll, _ = strconv.ParseFloat(strings.TrimSpace(subdata[2]), 64)
+
+			dvl.Head, _ = strconv.ParseFloat(strings.TrimSpace(subdata[3]), 64)
 
 		} else if subdata[0] == "TS" {
-			dvl.Salt, _ = strconv.ParseFloat(subdata[2], 64)
-			dvl.Temp, _ = strconv.ParseFloat(subdata[3], 64)
-			dvl.Depth, _ = strconv.ParseFloat(subdata[4], 64)
-			dvl.Velocity, _ = strconv.ParseFloat(subdata[5], 64)
+			dvl.Salt, _ = strconv.ParseFloat(strings.TrimSpace(subdata[2]), 64)
+			dvl.Temp, _ = strconv.ParseFloat(strings.TrimSpace(subdata[3]), 64)
+
+			dvl.Depth, _ = strconv.ParseFloat(strings.TrimSpace(subdata[4]), 64)
+			dvl.Velocity, _ = strconv.ParseFloat(strings.TrimSpace(subdata[5]), 64)
 
 		} else if subdata[0] == "BD" {
-			dvl.Eastrange, _ = strconv.ParseFloat(subdata[1], 64)
-			dvl.Northrange, _ = strconv.ParseFloat(subdata[2], 64)
-			dvl.Verrange, _ = strconv.ParseFloat(subdata[3], 64)
-			dvl.Botrange, _ = strconv.ParseFloat(subdata[4], 64)
-			dvl.Tt, _ = strconv.ParseFloat(subdata[5], 64)
+			dvl.Eastrange, _ = strconv.ParseFloat(strings.TrimSpace(subdata[1]), 64)
+
+			dvl.Northrange, _ = strconv.ParseFloat(strings.TrimSpace(subdata[2]), 64)
+
+			dvl.Verrange, _ = strconv.ParseFloat(strings.TrimSpace(subdata[3]), 64)
+
+			dvl.Botrange, _ = strconv.ParseFloat(strings.TrimSpace(subdata[4]), 64)
+			dvl.Tt, _ = strconv.ParseFloat(strings.TrimSpace(subdata[5]), 64)
 
 		} else if subdata[0] == "BS" {
-			dvl.Boardspd, _ = strconv.ParseFloat(subdata[1], 64)
-			dvl.Frontspd, _ = strconv.ParseFloat(subdata[2], 64)
-			dvl.Vertspd, _ = strconv.ParseFloat(subdata[3], 64)
+			dvl.Boardspd, _ = strconv.ParseFloat(strings.TrimSpace(subdata[1]), 64)
+
+			dvl.Frontspd, _ = strconv.ParseFloat(strings.TrimSpace(subdata[2]), 64)
+
+			dvl.Vertspd, _ = strconv.ParseFloat(strings.TrimSpace(subdata[3]), 64)
+
 		}
+
 	}
 	return nil
 }
@@ -94,8 +106,8 @@ func (dvl *DVL) Dump() {
 }
 
 func (phins *PHINS) Parse(recvbuf []byte) error {
-	if util.BytesToUIntBE(16, recvbuf) != uint64(CompassHeader) {
-		return errors.New("Compass Header missed!")
+	if util.BytesToUIntBE(16, recvbuf) != uint64(PHINSHeader) {
+		return errors.New("PHINS Header missed!")
 	}
 	length := util.BytesToUIntBE(16, recvbuf[2:])
 
@@ -165,7 +177,9 @@ func (p *Presure) Parse(recvbuf []byte) error {
 		return errors.New("Presure Header missed!")
 	}
 	len := util.BytesToUIntBE(16, recvbuf[2:])
-
+	if len < 24 {
+		return nil
+	}
 	payload := string(recvbuf[4 : 4+len])
 	timestr := payload[0:20]
 

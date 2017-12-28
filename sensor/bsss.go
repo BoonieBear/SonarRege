@@ -121,24 +121,24 @@ func (duby *DuBathy) Parse(recvbuf []byte) error {
 }
 func (bsss *Bsss) Parse(recvbuf []byte) error {
 	bsss.Header.Parse(recvbuf)
-	bsss.Header.Dump()
+	//bsss.Header.Dump()
 	bsss.Wpara.Parse(recvbuf[8:])
-	bsss.Wpara.Dump()
+	//bsss.Wpara.Dump()
 	bsss.Dpara.Parse(recvbuf[64:])
-	bsss.Dpara.Dump()
+	//bsss.Dpara.Dump()
 	index := 104 //shift index byte
 	for {
 		switch uint16(util.BytesToUIntLE(16, recvbuf[index:])) {
 		case PortByID, StarboardByID:
 			by := &SingelBathy{}
 			by.Parse(recvbuf[index:])
-			by.Dump()
+			//by.Dump()
 			bsss.Payload = append(bsss.Payload, by)
 			index = index + 12 + int(by.Length)
 		case PortSSID, StarboardSSID:
 			s := &Ss{}
 			s.Parse(recvbuf[index:])
-			s.Dump()
+			//s.Dump()
 			bsss.Payload = append(bsss.Payload, s)
 			index = index + 12 + int(s.Length)
 		}

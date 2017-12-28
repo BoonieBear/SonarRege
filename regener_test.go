@@ -24,6 +24,9 @@ func init() {
 		sensor.CTD6000Header: sensor.NewQueue(100),
 		sensor.CTD4500Header: sensor.NewQueue(100),
 		sensor.PresureHeader: sensor.NewQueue(100),
+		sensor.OASHeader:     sensor.NewQueue(100),
+		sensor.DVLHeader:     sensor.NewQueue(100),
+		sensor.PHINSHeader:   sensor.NewQueue(100),
 	}
 	queuelock = new(sync.Mutex)
 }
@@ -31,10 +34,10 @@ func walkMap(sensormap map[uint16]*sensor.Queue) {
 	for id, queue := range sensormap {
 		ncount := queue.Count()
 		fmt.Printf("queue 0x%x has %d items:\n", id, ncount)
-		for i := 0; i < ncount; i++ {
-			node := queue.Pop()
-			fmt.Println(node)
-		}
+		// for i := 0; i < ncount; i++ {
+		// 	node := queue.Pop()
+		// 	fmt.Println(node)
+		// }
 	}
 
 }
@@ -56,12 +59,15 @@ func TestDispatch(t *testing.T) {
 	f, _ := os.Open(file)
 	defer f.Close()
 	recvbuf := make([]byte, 1024)
+	var sum int
 	for {
 		n, err := f.Read(recvbuf)
 		if err != nil {
 			fmt.Println("read 2017_05_03_05_53_27_55 file err:", err.Error())
 			break
 		}
+		sum += n
+		//fmt.Printf("sum = %d\n", sum)
 		err = Dispatcher(recvbuf[:n], queuelock)
 		if err != nil {
 			fmt.Println("dispatch Bsss data  err:", err.Error())

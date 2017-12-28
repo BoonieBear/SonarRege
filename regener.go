@@ -55,6 +55,9 @@ func main() {
 		sensor.CTD6000Header: sensor.NewQueue(100),
 		sensor.CTD4500Header: sensor.NewQueue(100),
 		sensor.PresureHeader: sensor.NewQueue(100),
+		sensor.OASHeader:     sensor.NewQueue(100),
+		sensor.DVLHeader:     sensor.NewQueue(100),
+		sensor.PHINSHeader:   sensor.NewQueue(100),
 	}
 	logger.Println("Start Regenarator Thread.....")
 	go RegenThread(config)
@@ -84,7 +87,9 @@ func main() {
 //Dispatcher dispatch the sensor and bsss data
 func Dispatcher(buf []byte, queuelock *sync.Mutex) error {
 	buffer = append(buffer, buf[:]...)
+	//fmt.Printf("on buffer = %d\n", len(buffer))
 	for {
+		//fmt.Printf("for buffer = %d\n", len(buffer))
 		if len(buffer) < 4 {
 			break
 		}
@@ -102,9 +107,9 @@ func Dispatcher(buf []byte, queuelock *sync.Mutex) error {
 				}
 			}
 		}
-		if uint16(util.BytesToUIntBE(16, buffer)) == sensor.SubbottomId {
-			if uint16(util.BytesToUIntBE(16, buffer[2:])) == sensor.BsssVersion {
-				length := util.BytesToUIntBE(32, buffer[4:])
+		if uint16(util.BytesToUIntLE(16, buffer)) == sensor.SubbottomId {
+			if uint16(util.BytesToUIntLE(16, buffer[2:])) == sensor.BsssVersion {
+				length := util.BytesToUIntLE(32, buffer[4:])
 				if len(buffer) < int(length) {
 					//no enough buffer
 					break
@@ -130,8 +135,25 @@ func Dispatcher(buf []byte, queuelock *sync.Mutex) error {
 				}
 			}
 		}
-		//shift 2 bytes
-		buffer = append(buffer[:0], buffer[2:]...)
+		if uint16(util.BytesToUIntLE(16, buffer)) == sensor.RawID {
+			if uint16(util.BytesToUIntLE(16, buffer[2:])) == sensor.RawVersion {
+				length := util.BytesToUIntLE(32, buffer[4:])
+				if len(buffer) < int(length) {
+					//no enough buffer
+					break
+				} else {
+					data := make([]byte, length)
+					copy(data, buffer[:length])
+					buffer = append(buffer[:0], buffer[length:]...)
+					//return DispatchSensor(data, queuelock)
+				}
+			}
+		}
+		if len(buffer) > 1 {
+			//shift 1 bytes
+			buffer = append(buffer[:0], buffer[1:]...)
+		}
+
 	}
 	return nil
 }
@@ -192,7 +214,6 @@ func DispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 }
 func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 	totallength := util.BytesToUIntLE(32, recvbuf[4:])
-	fmt.Printf("totallength = %d\n", totallength)
 	index := uint64(8)
 	if string(recvbuf[8:14]) == "$GPZDA" {
 		index += 38
@@ -202,7 +223,6 @@ func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 
 	for {
 		id := uint16(util.BytesToUIntBE(16, recvbuf[index:]))
-		fmt.Printf("id = %x\n", id)
 		length := util.BytesToUIntBE(16, recvbuf[index+2:])
 		switch id {
 		case sensor.APHeader:
@@ -215,7 +235,6 @@ func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 				}
 				queuelock.Lock()
 				if queue, ok := SQMap[sensor.APHeader]; ok {
-					fmt.Println("push AP")
 					queue.Push(node)
 				}
 				queuelock.Unlock()
@@ -233,7 +252,6 @@ func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 				}
 				queuelock.Lock()
 				if queue, ok := SQMap[sensor.CompassHeader]; ok {
-					fmt.Println("push Compass")
 					queue.Push(node)
 				}
 				queuelock.Unlock()
@@ -251,7 +269,6 @@ func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 				}
 				queuelock.Lock()
 				if queue, ok := SQMap[sensor.CTD4500Header]; ok {
-					fmt.Println("push Ctd4500")
 					queue.Push(node)
 				}
 				queuelock.Unlock()
@@ -269,7 +286,6 @@ func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 				}
 				queuelock.Lock()
 				if queue, ok := SQMap[sensor.CTD6000Header]; ok {
-					fmt.Println("push Ctd6000")
 					queue.Push(node)
 				}
 				queuelock.Unlock()
@@ -287,7 +303,57 @@ func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 				}
 				queuelock.Lock()
 				if queue, ok := SQMap[sensor.PresureHeader]; ok {
-					fmt.Println("push Presure")
+					queue.Push(node)
+				}
+				queuelock.Unlock()
+
+			} else {
+				log.Println(err)
+			}
+		case sensor.OASHeader:
+			oas := &sensor.OAS{}
+			err := oas.Parse(recvbuf[index:])
+			if err == nil {
+				node := &sensor.Node{
+					Time: oas.Time,
+					Data: oas,
+				}
+				queuelock.Lock()
+				if queue, ok := SQMap[sensor.OASHeader]; ok {
+					queue.Push(node)
+				}
+				queuelock.Unlock()
+
+			} else {
+				log.Println(err)
+			}
+		case sensor.DVLHeader:
+			dvl := &sensor.DVL{}
+			err := dvl.Parse(recvbuf[index:])
+			if err == nil {
+				node := &sensor.Node{
+					Time: dvl.Time,
+					Data: dvl,
+				}
+				queuelock.Lock()
+				if queue, ok := SQMap[sensor.DVLHeader]; ok {
+					queue.Push(node)
+				}
+				queuelock.Unlock()
+
+			} else {
+				log.Println(err)
+			}
+		case sensor.PHINSHeader:
+			phi := &sensor.PHINS{}
+			err := phi.Parse(recvbuf[index:])
+			if err == nil {
+				node := &sensor.Node{
+					Time: phi.Time,
+					Data: phi,
+				}
+				queuelock.Lock()
+				if queue, ok := SQMap[sensor.PHINSHeader]; ok {
 					queue.Push(node)
 				}
 				queuelock.Unlock()
@@ -298,7 +364,7 @@ func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 		}
 		index += 4
 		index += length
-		if index == totallength-1 {
+		if index == totallength {
 			break
 		}
 

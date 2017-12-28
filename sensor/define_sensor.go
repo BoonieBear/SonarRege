@@ -5,6 +5,8 @@ import (
 )
 
 const (
+	RawID         uint16 = 0x61
+	RawVersion    uint16 = 0x02
 	BsssId        uint16 = 0x62
 	BsssVersion   uint16 = 0x02
 	SensorHeadId  uint16 = 0x80
@@ -67,7 +69,10 @@ type DVL struct {
 }
 
 type PHINS struct {
-	Time time.Time
+	Time  time.Time
+	Head  float64
+	Pitch float64
+	Roll  float64
 }
 
 type AP struct {
