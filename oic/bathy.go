@@ -50,19 +50,19 @@ func (bathy *Bathy) Init() {
 func (bathy *Bathy) Pack() []byte {
 	buf := bathy.Header.Pack()
 	for i := 0; i < len(bathy.PortAngle); i++ {
-		buf = append(buf, util.Float32ToByteBE(bathy.PortAngle[i])...)
+		buf = append(buf, util.Float32ToByteLE(bathy.PortAngle[i])...)
 	}
 	for i := 0; i < len(bathy.PortR); i++ {
-		buf = append(buf, util.Float32ToByteBE(bathy.PortR[i])...)
+		buf = append(buf, util.Float32ToByteLE(bathy.PortR[i])...)
 	}
 	for i := 0; i < len(bathy.StarboardAngle); i++ {
-		buf = append(buf, util.Float32ToByteBE(bathy.StarboardAngle[i])...)
+		buf = append(buf, util.Float32ToByteLE(bathy.StarboardAngle[i])...)
 	}
 	for i := 0; i < len(bathy.StarboardR); i++ {
-		buf = append(buf, util.Float32ToByteBE(bathy.StarboardR[i])...)
+		buf = append(buf, util.Float32ToByteLE(bathy.StarboardR[i])...)
 	}
 	for i := 0; i < 56; i++ {
-		buf = append(buf, util.IntToBytesBE(16, int64(bathy.Unknow[i]))...)
+		buf = append(buf, util.IntToBytesLE(16, int64(bathy.Unknow[i]))...)
 	}
 	return buf
 }

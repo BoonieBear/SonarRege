@@ -35,7 +35,7 @@ func (oas *OAS) Parse(recvbuf []byte) error {
 
 	data := strings.Split(payload[20:], ",")
 	if data[10] == "FF" {
-		oas.Range = 256
+		return errors.New("OAS range not found!")
 	} else {
 		oas.Range, _ = strconv.ParseFloat(data[10], 64)
 	}
@@ -410,6 +410,21 @@ func (q *Queue) FetchData(mergertime time.Time) ISensor {
 			return MergePresure(value1, value2, rate)
 		}
 	}
+	if value1, ok := fst_node.Data.(*OAS); ok {
+		if value2, ok := snd_node.Data.(*OAS); ok {
+			return MergeOAS(value1, value2, rate)
+		}
+	}
+	if value1, ok := fst_node.Data.(*DVL); ok {
+		if value2, ok := snd_node.Data.(*DVL); ok {
+			return MergeDVL(value1, value2, rate)
+		}
+	}
+	if value1, ok := fst_node.Data.(*PHINS); ok {
+		if value2, ok := snd_node.Data.(*PHINS); ok {
+			return MergePHINS(value1, value2, rate)
+		}
+	}
 	//mismatch
 	return nil
 
@@ -459,5 +474,39 @@ func MergeCtd6000(ctd_fst *Ctd6000, ctd_snd *Ctd6000, rate float64) *Ctd6000 {
 func MergePresure(pre_fst *Presure, pre_snd *Presure, rate float64) *Presure {
 	return &Presure{
 		P: pre_fst.P + (pre_snd.P-pre_fst.P)*rate,
+	}
+}
+
+func MergeOAS(oas_fst *OAS, oas_snd *OAS, rate float64) *OAS {
+	return &OAS{
+		Range: oas_fst.Range + (oas_snd.Range-oas_fst.Range)*rate,
+	}
+}
+
+func MergeDVL(dvl_fst *DVL, dvl_snd *DVL, rate float64) *DVL {
+	return &DVL{
+		Boardspd:   dvl_fst.Boardspd + (dvl_snd.Boardspd-dvl_fst.Boardspd)*rate,
+		Frontspd:   dvl_fst.Frontspd + (dvl_snd.Frontspd-dvl_fst.Frontspd)*rate,
+		Vertspd:    dvl_fst.Vertspd + (dvl_snd.Vertspd-dvl_fst.Vertspd)*rate,
+		Eastrange:  dvl_fst.Eastrange + (dvl_snd.Eastrange-dvl_fst.Eastrange)*rate,
+		Northrange: dvl_fst.Northrange + (dvl_snd.Northrange-dvl_fst.Northrange)*rate,
+		Verrange:   dvl_fst.Verrange + (dvl_snd.Verrange-dvl_fst.Verrange)*rate,
+		Botrange:   dvl_fst.Botrange + (dvl_snd.Botrange-dvl_fst.Botrange)*rate,
+		Tt:         dvl_fst.Tt + (dvl_snd.Tt-dvl_fst.Tt)*rate,
+		Head:       dvl_fst.Head + (dvl_snd.Head-dvl_fst.Head)*rate,
+		Pitch:      dvl_fst.Pitch + (dvl_snd.Pitch-dvl_fst.Pitch)*rate,
+		Roll:       dvl_fst.Roll + (dvl_snd.Roll-dvl_fst.Roll)*rate,
+		Salt:       dvl_fst.Salt + (dvl_snd.Salt-dvl_fst.Salt)*rate,
+		Temp:       dvl_fst.Temp + (dvl_snd.Temp-dvl_fst.Temp)*rate,
+		Depth:      dvl_fst.Depth + (dvl_snd.Depth-dvl_fst.Depth)*rate,
+		Velocity:   dvl_fst.Velocity + (dvl_snd.Velocity-dvl_fst.Velocity)*rate,
+	}
+}
+
+func MergePHINS(phins_fst *PHINS, phins_snd *PHINS, rate float64) *PHINS {
+	return &PHINS{
+		Head:  phins_fst.Head + (phins_snd.Head-phins_fst.Head)*rate,
+		Pitch: phins_fst.Pitch + (phins_snd.Pitch-phins_fst.Pitch)*rate,
+		Roll:  phins_fst.Roll + (phins_snd.Roll-phins_fst.Roll)*rate,
 	}
 }

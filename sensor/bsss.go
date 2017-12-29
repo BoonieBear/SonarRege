@@ -21,7 +21,7 @@ type Subbottom struct {
 }
 
 const (
-	ADID            uint16 = 0x01
+	APID            uint16 = 0x01
 	ReserveID       uint16 = 0x02
 	PortByID        uint16 = 0x04
 	StarboardByID   uint16 = 0x08

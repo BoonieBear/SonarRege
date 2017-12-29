@@ -92,3 +92,34 @@ func TestDispatchSensor(t *testing.T) {
 	// }
 	//walkMap(SQMap)
 }
+
+func TestRegen(t *testing.T) {
+	config := util.LoadCfg("./cfg.ini")
+	if config == nil {
+		logger.Fatal("No valid configuration, exit......")
+	}
+	//dump all items in config
+	config.Dump()
+	file := "./data/2017_05_03_05_53_27_55.dat"
+	f, _ := os.Open(file)
+	defer f.Close()
+	recvbuf := make([]byte, 1024)
+	for {
+		n, err := f.Read(recvbuf)
+		if err != nil {
+			fmt.Println("read 2017_05_03_05_53_27_55 file err:", err.Error())
+			break
+		}
+
+		err = Dispatcher(recvbuf[:n], queuelock)
+		if err != nil {
+			fmt.Println("dispatch Bsss data  err:", err.Error())
+			break
+		}
+	}
+
+	walkMap(SQMap)
+
+	RegenThread(config)
+
+}
