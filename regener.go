@@ -28,7 +28,10 @@ var RegenbEnable = false
 var RelayChan = make(chan []byte, 100)
 var logger = new(util.Logger)
 var buffer []byte
-var sby, pby, sss, pss int16
+var sby, pby, sss, pss, nby, nss int16
+var duby = new(sensor.DuBathy)
+
+var duss = new(sensor.DuSs)
 
 //SQMap external data queue map
 var SQMap map[uint16]*sensor.Queue
@@ -60,6 +63,10 @@ func main() {
 		sensor.DVLHeader:     sensor.NewQueue(100),
 		sensor.PHINSHeader:   sensor.NewQueue(100),
 	}
+	duby.PortBathy = nil
+	duby.StarboardBathy = nil
+	duss.PortSs = nil
+	duss.StarboardSs = nil
 	logger.Println("Start Regenarator Thread.....")
 	go RegenThread(config)
 	logger.Println("Start Relay Thread.....")
@@ -93,7 +100,7 @@ func Dispatcher(buf []byte, queuelock *sync.Mutex) error {
 	//fmt.Printf("on buffer = %d\n", len(buffer))
 	for {
 		//fmt.Printf("for buffer = %d\n", len(buffer))
-		if len(buffer) < 4 {
+		if len(buffer) < 8 {
 			break
 		}
 		if uint16(util.BytesToUIntLE(16, buffer)) == sensor.BsssId {
@@ -141,19 +148,23 @@ func Dispatcher(buf []byte, queuelock *sync.Mutex) error {
 		if uint16(util.BytesToUIntLE(16, buffer)) == sensor.RawID {
 			if uint16(util.BytesToUIntLE(16, buffer[2:])) == sensor.RawVersion {
 				length := util.BytesToUIntLE(32, buffer[4:])
+
 				if len(buffer) < int(length) {
 					//no enough buffer
 					break
 				} else {
+					//fmt.Printf(" ======= rawID %d\n", length)
 					data := make([]byte, length)
 					copy(data, buffer[:length])
 					buffer = append(buffer[:0], buffer[length:]...)
+					return nil
 					//return DispatchSensor(data, queuelock)
 				}
 			}
 		}
 		if len(buffer) > 1 {
 			//shift 1 bytes
+			//fmt.Printf("shift byte %x\n", buffer[0])
 			buffer = append(buffer[:0], buffer[1:]...)
 		}
 
@@ -164,12 +175,9 @@ func Dispatcher(buf []byte, queuelock *sync.Mutex) error {
 func DispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 	bs := &sensor.Bsss{}
 	bs.Parse(recvbuf)
-	duby := &sensor.DuBathy{}
-	duby.PortBathy = new(sensor.SingelBathy)
-	duby.StarboardBathy = new(sensor.SingelBathy)
-	duss := &sensor.DuSs{}
-	duss.PortSs = new(sensor.Ss)
-	duss.StarboardSs = new(sensor.Ss)
+	dby := &sensor.DuBathy{}
+	dss := &sensor.DuSs{}
+
 	var hasBy, hasSs bool
 
 	for _, v := range bs.Payload {
@@ -182,7 +190,14 @@ func DispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 				duby.StarboardBathy = value
 				sby++
 			}
-			hasBy = true
+			if duby.PortBathy != nil && duby.StarboardBathy != nil {
+				dby.StarboardBathy = duby.StarboardBathy
+				dby.PortBathy = duby.PortBathy
+				hasBy = true
+				duby.StarboardBathy = nil
+				duby.PortBathy = nil
+			}
+
 		}
 
 		if value, ok := v.(*sensor.Ss); ok {
@@ -194,34 +209,43 @@ func DispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 				duss.StarboardSs = value
 				sss++
 			}
-			hasSs = true
+			if duss.PortSs != nil && duss.StarboardSs != nil {
+				dss.PortSs = duss.PortSs
+				dss.StarboardSs = duss.StarboardSs
+				hasSs = true
+				duss.PortSs = nil
+				duss.StarboardSs = nil
+			}
+
 		}
 	}
 	if hasSs {
 		node := &sensor.Node{
 			Time: time.Unix(int64(bs.Dpara.EmitTime1st), int64(bs.Dpara.EmitTime2nd*1000)),
-			Data: duss,
+			Data: dss,
 		}
 		queuelock.Lock()
 		if queue, ok := SQMap[sensor.SSId]; ok {
 
 			queue.Push(node)
+			nss++
 		}
 		queuelock.Unlock()
 	}
 	if hasBy {
 		node := &sensor.Node{
 			Time: time.Unix(int64(bs.Dpara.EmitTime1st), int64(bs.Dpara.EmitTime2nd*1000)),
-			Data: duby,
+			Data: dby,
 		}
 		queuelock.Lock()
 		if queue, ok := SQMap[sensor.BathyId]; ok {
 
 			queue.Push(node)
+			nby++
 		}
 		queuelock.Unlock()
 	}
-	fmt.Printf("%d %d %d %d\n", pby, sby, pss, sss)
+	//fmt.Printf("%d %d %d %d %d %d\n", pby, sby, pss, sss, nby, nss)
 	return nil
 }
 func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
@@ -473,18 +497,17 @@ func RegenThread(cfg *util.Cfg) {
 	var ss *sensor.Node
 	var sub *sensor.Node
 	for {
-		// fmt.Println("======================")
-		// for id, queue := range SQMap {
-		// 	ncount := queue.Count()
-		// 	fmt.Printf("queue 0x%x has %d items:\n", id, ncount)
-		// }
+		fmt.Println("======================")
+		for id, queue := range SQMap {
+			ncount := queue.Count()
+			fmt.Printf("queue 0x%x has %d items:\n", id, ncount)
+		}
 		if RegenbEnable == false {
 			logger.Println("RegenThread - RegenbEnable set to false,exit thread")
 		}
 		if byfound == false {
 			if queueBy, ok := SQMap[sensor.BathyId]; ok {
 				maplock.Lock()
-				queueBy.Count()
 				if by = queueBy.Pop(); by != nil {
 					fmt.Println("bathy found!")
 					byfound = true
@@ -515,8 +538,8 @@ func RegenThread(cfg *util.Cfg) {
 			}
 		}
 
-		time.Sleep(time.Millisecond * 500)
-		if ssfound && byfound {
+		time.Sleep(time.Millisecond * 1000)
+		if ssfound && byfound && subfound {
 
 			sensordata := &sensor.MixData{}
 			maplock.Lock()

@@ -55,7 +55,7 @@ func TestParseBsss(t *testing.T) {
 	walkMap(SQMap)
 }
 func TestDispatch(t *testing.T) {
-	file := "./data/2017_05_03_05_53_27_55.dat"
+	file := "./data/2017_05_03_05_55_21_58.dat"
 	f, _ := os.Open(file)
 	defer f.Close()
 	recvbuf := make([]byte, 1024)
@@ -63,7 +63,7 @@ func TestDispatch(t *testing.T) {
 	for {
 		n, err := f.Read(recvbuf)
 		if err != nil {
-			fmt.Println("read 2017_05_03_05_53_27_55 file err:", err.Error())
+			fmt.Println("read 2017_05_03_05_55_21_58 file err:", err.Error())
 			break
 		}
 		sum += n
@@ -100,17 +100,19 @@ func TestRegen(t *testing.T) {
 	}
 	//dump all items in config
 	config.Dump()
-	file := "./data/2017_05_03_05_53_27_55.dat"
+	file := "./data/2017_05_03_05_55_21_58.dat"
 	f, _ := os.Open(file)
 	defer f.Close()
 	recvbuf := make([]byte, 1024)
+	var sum int
 	for {
 		n, err := f.Read(recvbuf)
 		if err != nil {
-			fmt.Println("read 2017_05_03_05_53_27_55 file err:", err.Error())
+			fmt.Println("read 2017_05_03_05_55_21_58 file err:", err.Error())
 			break
 		}
-
+		sum += n
+		//fmt.Printf("sum = %d\n", sum)
 		err = Dispatcher(recvbuf[:n], queuelock)
 		if err != nil {
 			fmt.Println("dispatch Bsss data  err:", err.Error())
