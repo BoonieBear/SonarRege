@@ -51,17 +51,17 @@ func main() {
 
 	//logger.Println("Create queue map for sensor data......")
 	SQMap = map[uint16]*sensor.Queue{
-		sensor.SSId:          sensor.NewQueue(100),
-		sensor.BathyId:       sensor.NewQueue(100),
-		sensor.SubbottomId:   sensor.NewQueue(100),
-		sensor.APHeader:      sensor.NewQueue(100),
-		sensor.CompassHeader: sensor.NewQueue(100),
-		sensor.CTD6000Header: sensor.NewQueue(100),
-		sensor.CTD4500Header: sensor.NewQueue(100),
-		sensor.PresureHeader: sensor.NewQueue(100),
-		sensor.OASHeader:     sensor.NewQueue(100),
-		sensor.DVLHeader:     sensor.NewQueue(100),
-		sensor.PHINSHeader:   sensor.NewQueue(100),
+		sensor.SSId:          sensor.NewQueue(1000),
+		sensor.BathyId:       sensor.NewQueue(1000),
+		sensor.SubbottomId:   sensor.NewQueue(1000),
+		sensor.APHeader:      sensor.NewQueue(1000),
+		sensor.CompassHeader: sensor.NewQueue(1000),
+		sensor.CTD6000Header: sensor.NewQueue(1000),
+		sensor.CTD4500Header: sensor.NewQueue(1000),
+		sensor.PresureHeader: sensor.NewQueue(1000),
+		sensor.OASHeader:     sensor.NewQueue(1000),
+		sensor.DVLHeader:     sensor.NewQueue(1000),
+		sensor.PHINSHeader:   sensor.NewQueue(1000),
 	}
 	duby.PortBathy = nil
 	duby.StarboardBathy = nil
@@ -193,6 +193,7 @@ func DispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 			if duby.PortBathy != nil && duby.StarboardBathy != nil {
 				dby.StarboardBathy = duby.StarboardBathy
 				dby.PortBathy = duby.PortBathy
+				dby.Wpara = bs.Wpara
 				hasBy = true
 				duby.StarboardBathy = nil
 				duby.PortBathy = nil
@@ -212,6 +213,7 @@ func DispatchBsss(recvbuf []byte, queuelock *sync.Mutex) error {
 			if duss.PortSs != nil && duss.StarboardSs != nil {
 				dss.PortSs = duss.PortSs
 				dss.StarboardSs = duss.StarboardSs
+				dss.Wpara = bs.Wpara
 				hasSs = true
 				duss.PortSs = nil
 				duss.StarboardSs = nil
@@ -260,6 +262,7 @@ func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 	for {
 		id := uint16(util.BytesToUIntBE(16, recvbuf[index:]))
 		length := util.BytesToUIntBE(16, recvbuf[index+2:])
+		//fmt.Printf("id %x index %d\n", id, index)
 		switch id {
 		case sensor.APHeader:
 			ap := &sensor.AP{}
@@ -391,6 +394,7 @@ func DispatchSensor(recvbuf []byte, queuelock *sync.Mutex) error {
 				queuelock.Lock()
 				if queue, ok := SQMap[sensor.PHINSHeader]; ok {
 					queue.Push(node)
+					//fmt.Printf("push phins %v\n", node)
 				}
 				queuelock.Unlock()
 
@@ -428,6 +432,7 @@ func MergeOICBathy(by *oic.Bathy, data *sensor.MixData) []byte {
 	if data.Ap != nil {
 		by.Header.NavFixLatitude = data.Ap.Lat
 		by.Header.NavFixLongtitude = data.Ap.Lng
+
 	}
 	if data.Comp != nil {
 		by.Header.VesselHeading = float32(data.Comp.Head)
@@ -449,14 +454,23 @@ func MergeOICBathy(by *oic.Bathy, data *sensor.MixData) []byte {
 		by.Header.VesselHeading = float32(data.Phins.Head)
 		by.Header.Pitch = float32(data.Phins.Pitch)
 		by.Header.Roll = float32(data.Phins.Roll)
+		by.Header.FishPitch = float32(data.Phins.Pitch)
+		by.Header.FishRoll = float32(data.Phins.Roll)
+		by.Header.ShipCourse = float32(data.Phins.Head)
+		by.Header.FishHeading = float32(data.Phins.Head)
+		//fmt.Printf("Phins write %f\n", sonar.Header.VesselHeading)
 	}
-	//by should be merged already
+	if data.Dvl != nil {
+		by.Header.FishAltitude = float32(data.Dvl.Botrange)
+
+	}
 
 	return by.Pack()
 }
 
 //MergeOICSonar merge sensor data to sonar structure
 func MergeOICSonar(sonar *oic.Sonar, data *sensor.MixData) []byte {
+
 	if data.Ap != nil {
 		sonar.Header.NavFixLatitude = data.Ap.Lat
 		sonar.Header.NavFixLongtitude = data.Ap.Lng
@@ -481,6 +495,15 @@ func MergeOICSonar(sonar *oic.Sonar, data *sensor.MixData) []byte {
 		sonar.Header.VesselHeading = float32(data.Phins.Head)
 		sonar.Header.Pitch = float32(data.Phins.Pitch)
 		sonar.Header.Roll = float32(data.Phins.Roll)
+		sonar.Header.FishPitch = float32(data.Phins.Pitch)
+		sonar.Header.FishRoll = float32(data.Phins.Roll)
+		sonar.Header.ShipCourse = float32(data.Phins.Head)
+		sonar.Header.FishHeading = float32(data.Phins.Head)
+		//fmt.Printf("Phins write %f\n", sonar.Header.VesselHeading)
+	}
+	if data.Dvl != nil {
+		sonar.Header.FishAltitude = float32(data.Dvl.Botrange)
+		//sonar.Header.Reserved2[0] = float32(data.Dvl.Botrange)
 	}
 	//by should be merged already
 
@@ -537,7 +560,7 @@ func RegenThread(cfg *util.Cfg) {
 				maplock.Unlock()
 			}
 		}
-
+		//fmt.Printf("merge time = %v\n", by.Time)
 		time.Sleep(time.Millisecond * 1000)
 		if ssfound && byfound && subfound {
 
@@ -563,6 +586,7 @@ func RegenThread(cfg *util.Cfg) {
 			}
 			if SQMap[sensor.DVLHeader].Count() > 0 {
 				sensordata.Dvl = SQMap[sensor.DVLHeader].FetchData(by.Time).(*sensor.DVL)
+				fmt.Printf("fish pitch = %f\n", sensordata.Dvl.Pitch)
 			}
 			if SQMap[sensor.PHINSHeader].Count() > 0 {
 				sensordata.Phins = SQMap[sensor.PHINSHeader].FetchData(by.Time).(*sensor.PHINS)
@@ -590,12 +614,16 @@ func RegenThread(cfg *util.Cfg) {
 				subbottom = sub.Data.(*sensor.Subbottom)
 			}
 
-			bathy := formatBathy(duby)
-			trace.Write(MergeOICBathy(bathy, sensordata), false)
-
 			sonar := formatSonar(duss, subbottom)
+			sonar.Header.Sec = uint32(by.Time.Unix())
+			sonar.Header.USec = uint32(by.Time.Nanosecond() / 1000)
+			sonar.Header.PingTime = float64(by.Time.Unix())
 			trace.Write(MergeOICSonar(sonar, sensordata), false)
-
+			bathy := formatBathy(duby)
+			bathy.Header.Sec = uint32(by.Time.Unix())
+			bathy.Header.USec = uint32(by.Time.Nanosecond() / 1000)
+			bathy.Header.PingTime = float64(by.Time.Unix())
+			trace.Write(MergeOICBathy(bathy, sensordata), false)
 		}
 		byfound = false
 		ssfound = false
@@ -607,7 +635,12 @@ func formatBathy(duby *sensor.DuBathy) *oic.Bathy {
 	bathy := &oic.Bathy{}
 	bathy.Init()
 	length := len(duby.PortBathy.DataAngle)
-
+	bathy.Header.Channel[0].Frequency = duby.Wpara.PortStartFq
+	bathy.Header.Channel[0].Empt = 1
+	bathy.Header.Channel[1].Frequency = duby.Wpara.StarboardFq
+	bathy.Header.Channel[1].Empt = 1
+	bathy.Header.Channel[2].Frequency = duby.Wpara.PortStartFq
+	bathy.Header.Channel[2].Empt = 1
 	if length > 0 {
 		bathy.PortAngle = make([]float32, length)
 		bathy.PortR = make([]float32, length)
@@ -633,6 +666,12 @@ func formatSonar(duss *sensor.DuSs, sub *sensor.Subbottom) *oic.Sonar {
 
 	sonar := &oic.Sonar{}
 	sonar.Init()
+	sonar.Header.Channel[0].Frequency = duss.Wpara.PortStartFq
+	sonar.Header.Channel[0].Empt = 1
+	sonar.Header.Channel[1].Frequency = duss.Wpara.StarboardFq
+	sonar.Header.Channel[1].Empt = 1
+	sonar.Header.Channel[2].Frequency = sub.Wpara.PortStartFq
+	sonar.Header.Channel[2].Empt = 1
 	length := len(duss.PortSs.Data)
 	if length > 0 {
 		sonar.PortSidescan = make([]int16, length)
@@ -734,7 +773,7 @@ func handleConnection(conn net.Conn) {
 		if n > 0 {
 			err = Dispatcher(buf[:n], maplock)
 			if err != nil {
-				logger.Println(fmt.Sprintf("Dispatcher error- ", err))
+				//logger.Println(fmt.Sprintf("Dispatcher error: ", err))
 			}
 			if RelayEnable {
 				RelayChan <- buf[:n]

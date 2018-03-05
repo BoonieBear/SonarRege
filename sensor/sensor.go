@@ -2,7 +2,7 @@ package sensor
 
 import (
 	"errors"
-	//	"fmt"
+	"fmt"
 	"math"
 	"regener/util"
 	"strconv"
@@ -422,6 +422,7 @@ func (q *Queue) FetchData(mergertime time.Time) ISensor {
 	}
 	if value1, ok := fst_node.Data.(*PHINS); ok {
 		if value2, ok := snd_node.Data.(*PHINS); ok {
+			fmt.Printf("rate = %f value1.heading = %f value2.heading = %f\n", rate, value1.Head, value2.Head)
 			return MergePHINS(value1, value2, rate)
 		}
 	}
@@ -484,6 +485,8 @@ func MergeOAS(oas_fst *OAS, oas_snd *OAS, rate float64) *OAS {
 }
 
 func MergeDVL(dvl_fst *DVL, dvl_snd *DVL, rate float64) *DVL {
+	// fmt.Printf("dvl_fst %v\n", dvl_fst)
+	// fmt.Printf("dvl_snd %v\n", dvl_snd)
 	return &DVL{
 		Boardspd:   dvl_fst.Boardspd + (dvl_snd.Boardspd-dvl_fst.Boardspd)*rate,
 		Frontspd:   dvl_fst.Frontspd + (dvl_snd.Frontspd-dvl_fst.Frontspd)*rate,

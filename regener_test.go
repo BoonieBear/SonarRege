@@ -16,17 +16,17 @@ var file string
 
 func init() {
 	SQMap = map[uint16]*sensor.Queue{
-		sensor.SSId:          sensor.NewQueue(100),
-		sensor.BathyId:       sensor.NewQueue(100),
-		sensor.SubbottomId:   sensor.NewQueue(100),
-		sensor.APHeader:      sensor.NewQueue(100),
-		sensor.CompassHeader: sensor.NewQueue(100),
-		sensor.CTD6000Header: sensor.NewQueue(100),
-		sensor.CTD4500Header: sensor.NewQueue(100),
-		sensor.PresureHeader: sensor.NewQueue(100),
-		sensor.OASHeader:     sensor.NewQueue(100),
-		sensor.DVLHeader:     sensor.NewQueue(100),
-		sensor.PHINSHeader:   sensor.NewQueue(100),
+		sensor.SSId:          sensor.NewQueue(1000),
+		sensor.BathyId:       sensor.NewQueue(1000),
+		sensor.SubbottomId:   sensor.NewQueue(1000),
+		sensor.APHeader:      sensor.NewQueue(1000),
+		sensor.CompassHeader: sensor.NewQueue(1000),
+		sensor.CTD6000Header: sensor.NewQueue(1000),
+		sensor.CTD4500Header: sensor.NewQueue(1000),
+		sensor.PresureHeader: sensor.NewQueue(1000),
+		sensor.OASHeader:     sensor.NewQueue(1000),
+		sensor.DVLHeader:     sensor.NewQueue(1000),
+		sensor.PHINSHeader:   sensor.NewQueue(1000),
 	}
 	queuelock = new(sync.Mutex)
 }
@@ -55,7 +55,7 @@ func TestParseBsss(t *testing.T) {
 	walkMap(SQMap)
 }
 func TestDispatch(t *testing.T) {
-	file := "./data/2017_05_03_05_55_21_58.dat"
+	file := "./data/2017_05_03_05_53_27_55.dat"
 	f, _ := os.Open(file)
 	defer f.Close()
 	recvbuf := make([]byte, 1024)
@@ -63,7 +63,7 @@ func TestDispatch(t *testing.T) {
 	for {
 		n, err := f.Read(recvbuf)
 		if err != nil {
-			fmt.Println("read 2017_05_03_05_55_21_58 file err:", err.Error())
+			fmt.Println("read 2017_05_03_05_53_27_55 file err:", err.Error())
 			break
 		}
 		sum += n
@@ -100,7 +100,7 @@ func TestRegen(t *testing.T) {
 	}
 	//dump all items in config
 	config.Dump()
-	file := "./data/2017_05_03_05_55_21_58.dat"
+	file := "./data/2017_05_03_05_53_27_55.dat"
 	f, _ := os.Open(file)
 	defer f.Close()
 	recvbuf := make([]byte, 1024)
@@ -108,7 +108,7 @@ func TestRegen(t *testing.T) {
 	for {
 		n, err := f.Read(recvbuf)
 		if err != nil {
-			fmt.Println("read 2017_05_03_05_55_21_58 file err:", err.Error())
+			fmt.Println("read 2017_05_03_05_53_27_55 file err:", err.Error())
 			break
 		}
 		sum += n

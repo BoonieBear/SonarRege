@@ -28,11 +28,12 @@ type Channel struct {
 
 func (channel *Channel) Pack() []byte {
 	var buf []byte
-	buf = append(buf, util.UIntToBytesBE(8, uint64(channel.Type))...)
-	buf = append(buf, util.UIntToBytesBE(8, uint64(channel.Side))...)
-	buf = append(buf, util.UIntToBytesBE(8, uint64(channel.Size))...)
-	buf = append(buf, util.UIntToBytesBE(32, uint64(channel.Frequency))...)
-	buf = append(buf, util.UIntToBytesBE(32, uint64(channel.Samples))...)
+	buf = append(buf, util.UIntToBytesLE(8, uint64(channel.Type))...)
+	buf = append(buf, util.UIntToBytesLE(8, uint64(channel.Side))...)
+	buf = append(buf, util.UIntToBytesLE(8, uint64(channel.Size))...)
+	buf = append(buf, util.UIntToBytesLE(8, uint64(channel.Empt))...)
+	buf = append(buf, util.UIntToBytesLE(32, uint64(channel.Frequency))...)
+	buf = append(buf, util.UIntToBytesLE(32, uint64(channel.Samples))...)
 	return buf
 }
 
@@ -51,7 +52,7 @@ type OIC_Header struct {
 	ShipCourse          float32
 	ShipSpeed           float32
 	Sec                 uint32
-	uSec                uint32
+	USec                uint32
 	SpareGain           float32
 	FishHeading         float32
 	FishDepth           float32
@@ -101,7 +102,7 @@ type OIC_Header struct {
 //initial OIC header
 func OICInit(header *OIC_Header, isbathy bool) {
 	header.Kind = 0x4F49432F
-	header.Type = 26
+	header.Type = 0x40
 	if isbathy {
 		header.DataSize = 3752
 	} else {
@@ -109,9 +110,12 @@ func OICInit(header *OIC_Header, isbathy bool) {
 	}
 	header.ClientSize = 248
 	header.FishStatus = FOCUSAUTOMANUAL
-	header.NavUsed = 6
-	header.NavType = 1
+	header.NavUsed = 0
+	header.NavType = 2
 	header.UTMZone = 0x3200DA02
+	header.FishRange = 400
+	header.FishPingPeriod = 0.538793
+	header.SoundVelocity = 1500
 	//field have not initilized use the default value if other not assign value to them
 
 }
@@ -119,21 +123,21 @@ func OICInit(header *OIC_Header, isbathy bool) {
 //pack the oic header struct
 func (header *OIC_Header) Pack() []byte {
 	var buf []byte
-	buf = append(buf, util.UIntToBytesLE(32, uint64(header.Kind))...)
+	buf = append(buf, util.UIntToBytesBE(32, uint64(header.Kind))...)
 	buf = append(buf, util.UIntToBytesLE(32, uint64(header.Type))...)
 	buf = append(buf, util.UIntToBytesLE(32, uint64(header.DataSize))...)
 	buf = append(buf, util.UIntToBytesLE(32, uint64(header.ProcStatus))...)
-	buf = append(buf, util.UIntToBytesLE(32, uint64(header.ClientSize))...)
+	buf = append(buf, util.UIntToBytesLE(8, uint64(header.ClientSize))...)
 	buf = append(buf, util.UIntToBytesLE(8, uint64(header.FishStatus))...)
 	buf = append(buf, util.UIntToBytesLE(8, uint64(header.NavUsed))...)
 	buf = append(buf, util.UIntToBytesLE(8, uint64(header.NavType))...)
-	buf = append(buf, util.UIntToBytesLE(32, uint64(header.UTMZone))...)
+	buf = append(buf, util.UIntToBytesBE(32, uint64(header.UTMZone))...)
 	buf = append(buf, util.Float64ToByteLE(header.ShipX)...)
 	buf = append(buf, util.Float64ToByteLE(header.ShipY)...)
 	buf = append(buf, util.Float32ToByteLE(header.ShipCourse)...)
 	buf = append(buf, util.Float32ToByteLE(header.ShipSpeed)...)
 	buf = append(buf, util.UIntToBytesLE(32, uint64(header.Sec))...)
-	buf = append(buf, util.UIntToBytesLE(32, uint64(header.uSec))...)
+	buf = append(buf, util.UIntToBytesLE(32, uint64(header.USec))...)
 	buf = append(buf, util.Float32ToByteLE(header.SpareGain)...)
 	buf = append(buf, util.Float32ToByteLE(header.FishHeading)...)
 	buf = append(buf, util.Float32ToByteLE(header.FishDepth)...)

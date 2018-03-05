@@ -94,6 +94,7 @@ type SingelBathy struct {
 
 //ss struct for star/port ss
 type DuSs struct {
+	Wpara       Workpara
 	PortSs      *Ss
 	StarboardSs *Ss
 }
@@ -108,6 +109,7 @@ func (duss *DuSs) Dump() {
 
 //Bathy struct for star/port bathy
 type DuBathy struct {
+	Wpara          Workpara
 	PortBathy      *SingelBathy
 	StarboardBathy *SingelBathy
 }

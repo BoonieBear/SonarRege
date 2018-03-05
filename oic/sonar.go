@@ -2,6 +2,7 @@
 package oic
 
 import (
+	"fmt"
 	"regener/util"
 )
 
@@ -17,9 +18,25 @@ func (sonar *Sonar) Init() {
 	header.Channel[0].Side = 0 //sonar side:0 = port 1 = starboard
 	//data sample type and size:0 = 1 byte integer 1 = 2 byte integer 2 = 4 byte integer 3 = 4 byte float 4 = 12 byte set of three floats - range, theta, amp */
 	header.Channel[0].Size = 1
+
+	header.Channel[1].Type = 0
+	header.Channel[1].Side = 1
+	header.Channel[1].Size = 1
+
+	header.Channel[2].Type = 0
+	header.Channel[2].Side = 2
+	header.Channel[2].Size = 1
 }
 
 func (sonar *Sonar) Pack() []byte {
+	datasize := (len(sonar.PortSidescan) + len(sonar.StarboardSidescan) + len(sonar.SubBottom)) * 2
+	sonar.Header.DataSize = uint32(datasize)
+	sonar.Header.ChanOffset[1] = uint32(len(sonar.PortSidescan) * 2)
+	sonar.Header.ChanOffset[2] = uint32(len(sonar.PortSidescan)*2 + len(sonar.StarboardSidescan)*2)
+	sonar.Header.Channel[0].Samples = uint32(len(sonar.PortSidescan))
+	sonar.Header.Channel[1].Samples = uint32(len(sonar.StarboardSidescan))
+	sonar.Header.Channel[2].Samples = uint32(len(sonar.SubBottom))
+	fmt.Printf("sonar.Header.Channel[2].Samples = %d\n", sonar.Header.Channel[2].Samples)
 	buf := sonar.Header.Pack()
 	for i := 0; i < len(sonar.PortSidescan); i++ {
 		buf = append(buf, util.IntToBytesLE(16, int64(sonar.PortSidescan[i]))...)
