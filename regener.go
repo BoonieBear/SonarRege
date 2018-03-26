@@ -432,7 +432,7 @@ func MergeOICBathy(by *oic.Bathy, data *sensor.MixData) []byte {
 	if data.Ap != nil {
 		by.Header.NavFixLatitude = data.Ap.Lat
 		by.Header.NavFixLongtitude = data.Ap.Lng
-
+		sonar.Header.ShipX, sonar.Header.ShipY = util.Deg2utm(data.Ap.Lat, data.Ap.Lng)
 	}
 	if data.Comp != nil {
 		by.Header.VesselHeading = float32(data.Comp.Head)
@@ -474,6 +474,7 @@ func MergeOICSonar(sonar *oic.Sonar, data *sensor.MixData) []byte {
 	if data.Ap != nil {
 		sonar.Header.NavFixLatitude = data.Ap.Lat
 		sonar.Header.NavFixLongtitude = data.Ap.Lng
+		sonar.Header.ShipX, sonar.Header.ShipY = util.Deg2utm(data.Ap.Lat, data.Ap.Lng)
 	}
 	if data.Comp != nil {
 		sonar.Header.VesselHeading = float32(data.Comp.Head)
