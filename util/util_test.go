@@ -41,3 +41,12 @@ func TestWriteTraceFile(t *testing.T) {
 	}
 	tfile.Close()
 }
+func TestDeg2utm(t *testing.T) {
+	Lat := 40.3154333
+	Lon := -3.4857166
+	x, y := Deg2utm(Lat, Lon)
+	if x != 458731 || y != 4462881 {
+		t.Errorf("err x=%d y=%d", x, y)
+	}
+
+}

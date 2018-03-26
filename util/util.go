@@ -396,6 +396,44 @@ func ByteToFloat64BE(bytes []byte) float64 {
 	return math.Float64frombits(bits)
 }
 
+//(x,y)
+func Deg2utm(la float64, lo float64) (uint32, uint32) {
+	pi := 3.1415926
+	sa := 6378137.000000
+	sb := 6356752.314245
+	e2 := (math.Sqrt((sa * sa) - (sb * sb))) / sb
+	e2cuadrada := e2 * e2
+	c := (sa * sa) / sb
+
+	lat := la * (pi / 180)
+	lon := lo * (pi / 180)
+	Huso := math.Floor((lo / 6) + 31)
+	S := ((Huso * 6) - 183)
+	deltaS := lon - (S * (pi / 180))
+	a := math.Cos(lat) * math.Sin(deltaS)
+	epsilon := 0.5 * math.Log((1+a)/(1-a))
+	nu := math.Atan(math.Tan(lat)/math.Cos(deltaS)) - lat
+	v := (c / math.Sqrt(1+(e2cuadrada*(math.Cos(lat))*(math.Cos(lat))))) * 0.9996
+	ta := (e2cuadrada / 2) * epsilon * epsilon * (math.Cos(lat)) * (math.Cos(lat))
+	a1 := math.Sin(2 * lat)
+	a2 := a1 * (math.Cos(lat)) * (math.Cos(lat))
+	j2 := lat + (a1 / 2)
+	j4 := ((3.0 * j2) + a2) / 4
+	j6 := ((5.0 * j4) + (a2 * (math.Cos(lat)) * (math.Cos(lat)))) / 3
+	alfa := (3.0 / 4) * e2cuadrada
+	beta := (5.0 / 3) * alfa * alfa
+	gama := (35.0 / 27) * alfa * alfa * alfa
+	Bm := 0.9996 * c * (lat - alfa*j2 + beta*j4 - gama*j6)
+	xx := epsilon*v*(1+(ta/3)) + 500000
+	yy := nu*v*(1+ta) + Bm
+	//fmt.Printf("epsilon, v, ta %f %f %f", epsilon, v, ta)
+	if yy < 0 {
+		yy = 9999999 + yy
+	}
+
+	return uint32(xx + 0.5), uint32(yy + 0.5)
+}
+
 //save file
 type Tracefile struct {
 	Writer    *bufio.Writer

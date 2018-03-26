@@ -168,7 +168,7 @@ func (sub *Subbottom) Parse(recvbuf []byte) error {
 	sub.Wpara.Parse(recvbuf[8:])
 	sub.Dpara.Parse(recvbuf[64:])
 	for i := range sub.Sbdata {
-		sub.Sbdata[i] = uint16(util.BytesToUIntBE(16, recvbuf[104+2*i:]))
+		sub.Sbdata[i] = uint16(util.BytesToUIntLE(16, recvbuf[104+2*i:]))
 	}
 	return nil
 }
