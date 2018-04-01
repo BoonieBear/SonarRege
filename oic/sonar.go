@@ -2,7 +2,7 @@
 package oic
 
 import (
-	"fmt"
+	//	"fmt"
 	"regener/util"
 )
 
@@ -36,7 +36,7 @@ func (sonar *Sonar) Pack() []byte {
 	sonar.Header.Channel[0].Samples = uint32(len(sonar.PortSidescan))
 	sonar.Header.Channel[1].Samples = uint32(len(sonar.StarboardSidescan))
 	sonar.Header.Channel[2].Samples = uint32(len(sonar.SubBottom))
-	fmt.Printf("sonar.Header.Channel[2].Samples = %d\n", sonar.Header.Channel[2].Samples)
+
 	buf := sonar.Header.Pack()
 	for i := 0; i < len(sonar.PortSidescan); i++ {
 		buf = append(buf, util.IntToBytesLE(16, int64(sonar.PortSidescan[i]))...)

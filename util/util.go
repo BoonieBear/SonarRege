@@ -397,7 +397,7 @@ func ByteToFloat64BE(bytes []byte) float64 {
 }
 
 //(x,y)
-func Deg2utm(la float64, lo float64) (uint32, uint32) {
+func Deg2utm(la float64, lo float64) (float64, float64) {
 	pi := 3.1415926
 	sa := 6378137.000000
 	sb := 6356752.314245
@@ -431,7 +431,7 @@ func Deg2utm(la float64, lo float64) (uint32, uint32) {
 		yy = 9999999 + yy
 	}
 
-	return uint32(xx + 0.5), uint32(yy + 0.5)
+	return xx, yy
 }
 
 //save file

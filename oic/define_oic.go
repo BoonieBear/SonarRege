@@ -42,7 +42,7 @@ type OIC_Header struct {
 	Type                uint32
 	DataSize            uint32
 	ProcStatus          uint32
-	ClientSize          uint32
+	ClientSize          uint8
 	FishStatus          STATUS
 	NavUsed             uint8
 	NavType             uint8

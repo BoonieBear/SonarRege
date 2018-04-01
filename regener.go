@@ -432,7 +432,9 @@ func MergeOICBathy(by *oic.Bathy, data *sensor.MixData) []byte {
 	if data.Ap != nil {
 		by.Header.NavFixLatitude = data.Ap.Lat
 		by.Header.NavFixLongtitude = data.Ap.Lng
-		sonar.Header.ShipX, sonar.Header.ShipY = util.Deg2utm(data.Ap.Lat, data.Ap.Lng)
+		by.Header.ShipX, by.Header.ShipY = util.Deg2utm(data.Ap.Lat, data.Ap.Lng)
+		by.Header.FishX, by.Header.FishY = util.Deg2utm(data.Ap.Lat, data.Ap.Lng)
+		fmt.Printf("merge lat %f lng %f\n", data.Ap.Lat, data.Ap.Lng)
 	}
 	if data.Comp != nil {
 		by.Header.VesselHeading = float32(data.Comp.Head)
@@ -475,6 +477,8 @@ func MergeOICSonar(sonar *oic.Sonar, data *sensor.MixData) []byte {
 		sonar.Header.NavFixLatitude = data.Ap.Lat
 		sonar.Header.NavFixLongtitude = data.Ap.Lng
 		sonar.Header.ShipX, sonar.Header.ShipY = util.Deg2utm(data.Ap.Lat, data.Ap.Lng)
+		sonar.Header.FishX, sonar.Header.FishY = util.Deg2utm(data.Ap.Lat, data.Ap.Lng)
+		fmt.Printf("merge lat %f lng %f\n", data.Ap.Lat, data.Ap.Lng)
 	}
 	if data.Comp != nil {
 		sonar.Header.VesselHeading = float32(data.Comp.Head)
@@ -521,11 +525,11 @@ func RegenThread(cfg *util.Cfg) {
 	var ss *sensor.Node
 	var sub *sensor.Node
 	for {
-		fmt.Println("======================")
-		for id, queue := range SQMap {
-			ncount := queue.Count()
-			fmt.Printf("queue 0x%x has %d items:\n", id, ncount)
-		}
+		// fmt.Println("======================")
+		// for id, queue := range SQMap {
+		// 	ncount := queue.Count()
+		// 	fmt.Printf("queue 0x%x has %d items:\n", id, ncount)
+		// }
 		if RegenbEnable == false {
 			logger.Println("RegenThread - RegenbEnable set to false,exit thread")
 		}
@@ -533,7 +537,7 @@ func RegenThread(cfg *util.Cfg) {
 			if queueBy, ok := SQMap[sensor.BathyId]; ok {
 				maplock.Lock()
 				if by = queueBy.Pop(); by != nil {
-					fmt.Println("bathy found!")
+					//fmt.Println("bathy found!")
 					byfound = true
 				}
 				maplock.Unlock()
@@ -543,7 +547,7 @@ func RegenThread(cfg *util.Cfg) {
 			if queueSs, ok := SQMap[sensor.SSId]; ok {
 				maplock.Lock()
 				if ss = queueSs.Pop(); ss != nil {
-					fmt.Println("ss found!")
+					//fmt.Println("ss found!")
 					ssfound = true
 
 				}
@@ -554,7 +558,7 @@ func RegenThread(cfg *util.Cfg) {
 			if queueSub, ok := SQMap[sensor.SubbottomId]; ok {
 				maplock.Lock()
 				if sub = queueSub.Pop(); sub != nil {
-					fmt.Println("sub found!")
+					//fmt.Println("sub found!")
 					subfound = true
 
 				}
@@ -587,7 +591,7 @@ func RegenThread(cfg *util.Cfg) {
 			}
 			if SQMap[sensor.DVLHeader].Count() > 0 {
 				sensordata.Dvl = SQMap[sensor.DVLHeader].FetchData(by.Time).(*sensor.DVL)
-				fmt.Printf("fish pitch = %f\n", sensordata.Dvl.Pitch)
+				//fmt.Printf("fish pitch = %f\n", sensordata.Dvl.Pitch)
 			}
 			if SQMap[sensor.PHINSHeader].Count() > 0 {
 				sensordata.Phins = SQMap[sensor.PHINSHeader].FetchData(by.Time).(*sensor.PHINS)
@@ -595,7 +599,7 @@ func RegenThread(cfg *util.Cfg) {
 			maplock.Unlock()
 			if trace.File == nil {
 				err := trace.New("BSSS", uint32(cfg.MaxSize)*1024*1024)
-				fmt.Printf("trace file size = %d\n", trace.MaxSize)
+				//fmt.Printf("trace file size = %d\n", trace.MaxSize)
 				if err != nil {
 					logger.Fatal("Create bsss data file failed!")
 				}

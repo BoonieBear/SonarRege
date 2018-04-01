@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"regener/sensor"
@@ -100,7 +101,7 @@ func TestRegen(t *testing.T) {
 	}
 	//dump all items in config
 	config.Dump()
-	file := "./data/2017_05_03_05_53_27_55.dat"
+	file := "./data/TH00120180111_RAW.dat"
 	f, _ := os.Open(file)
 	defer f.Close()
 	recvbuf := make([]byte, 1024)
@@ -108,7 +109,11 @@ func TestRegen(t *testing.T) {
 	for {
 		n, err := f.Read(recvbuf)
 		if err != nil {
-			fmt.Println("read 2017_05_03_05_53_27_55 file err:", err.Error())
+			if err != io.EOF {
+				fmt.Println("Read TH00120180111_RAW finished")
+				break
+			}
+			fmt.Println("Read TH00120180111_RAW file err:", err.Error())
 			break
 		}
 		sum += n

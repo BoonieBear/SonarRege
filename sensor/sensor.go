@@ -35,7 +35,9 @@ func (oas *OAS) Parse(recvbuf []byte) error {
 
 	data := strings.Split(payload[20:], ",")
 	if data[10] == "FF" {
-		return errors.New("OAS range not found!")
+		//return errors.New("OAS range not found!")
+		oas.Range = 255
+
 	} else {
 		oas.Range, _ = strconv.ParseFloat(data[10], 64)
 	}
